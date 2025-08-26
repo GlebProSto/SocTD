@@ -75,12 +75,7 @@ body {
   border-right: 1px solid var(--border-color);
 }
 
-.post-form {
-  border-bottom: 1px solid var(--border-color);
-  padding: 20px;
-  background-color: var(--bg-color);
-  margin-right: 300px;
-}
+
 
 .post-input {
   width: 100%;
@@ -122,43 +117,6 @@ body {
   margin-bottom: 10px;
 }
 
-.post-username {
-  font-weight: bold;
-  margin-right: 5px;
-  color: var(--text-color);
-}
-
-.post-date {
-  color: var(--secondary-text);
-  font-size: 14px;
-}
-
-.post-content {
-  margin-bottom: 15px;
-  line-height: 1.4;
-  font-size: 16px;
-}
-
-.post-actions {
-  display: flex;
-  gap: 20px;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--secondary-text);
-  cursor: pointer;
-  background: none;
-  border: none;
-  font-size: 14px;
-  transition: color 0.2s;
-}
-
-.action-btn:hover {
-  color: var(--main-color);
-}
 
 .auth-buttons {
   position: fixed;
@@ -198,6 +156,7 @@ body {
 .btn-outline:hover {
   background-color: var(--hover-color);
 }
+
 
 /* Стили для форм */
 .auth-form {
@@ -288,16 +247,93 @@ body {
   }
 }
 
-.fake-form .post-input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  background-color: #f5f5f5;
 
-  cursor: not-allowed;
-}
 .post-input:disabled {
   background-color: white !important;
   color: #333 !important;
   cursor: not-allowed;
+}
+
+/* Стили для аватара в посте */
+.post-author-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  gap: 8px;
+}
+
+
+
+
+
+/* Стили для аватара в посте */
+.post-author-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.post-author-link:hover {
+  transform: translateY(-2px);
+}
+
+
+
+
+
+
+
+
+
+.post-username {
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.post-author-link:hover .post-username {
+  color: #007bff;
+}
+
+/* Убираем подчеркивание у ссылки */
+.post-author-link {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+/* Эффект для всей карточки поста при наведении на аватар */
+.post:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.post {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e1e8ed;
+  transition: all 0.3s ease;
+}
+
+.post:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  border-color: #d1d9e0;
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.post-date {
+  color: #657786;
+  font-size: 14px;
 }

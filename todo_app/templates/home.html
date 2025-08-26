@@ -30,7 +30,14 @@
   {% for post in posts %}
   <div class="post">
     <div class="post-header">
-      <span class="post-username">{{ post.author.username }}</span>
+      <a href="{% url 'user_profile' post.author.username %}" class="post-author-link">
+        {% if post.author.profile.profile_picture %}
+        <img src="{{ post.author.profile.profile_picture.url }}" alt="Аватар" class="post-avatar" />
+        {% else %}
+        <div class="post-avatar-placeholder">{{ post.author.username|first|upper }}</div>
+        {% endif %}
+        <span class="post-username">{{ post.author.username }}</span>
+      </a>
       <span class="post-date">{{ post.created_at|timesince }} назад</span>
     </div>
 

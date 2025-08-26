@@ -8,6 +8,23 @@ class Profile(models.Model):
     bio = models.TextField(max_length=500, blank=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    def get_friends_count(self):
+        return self.user.friendship_requests_sent.filter(accepted=True).count()
+    
+    def get_followers_count(self):
+        return self.user.friendship_requests_received.filter(accepted=True).count()
+    
+    def get_following_count(self):
+        return self.user.friendship_requests_sent.filter(accepted=True).count()
+
+class Friendship(models.Model):
+    from_user = models.ForeignKey(User, related_name='friendship_requests_sent', on_delete=models.CASCADE)
+    to_user = models.ForeignKey(User, related_name='friendship_requests_received', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    accepted = models.BooleanField(default=False)
+    
+    class Meta:
+        unique_together = ('from_user', 'to_user')
 
 class TodoPost(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -16,7 +33,6 @@ class TodoPost(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     likes = models.ManyToManyField(User, related_name='liked_posts', blank=True)
-    # Добавляем поле для репостов
     reposts = models.ManyToManyField(User, through='Repost', related_name='reposted_posts', blank=True)
 
     def __str__(self):
@@ -28,7 +44,7 @@ class Repost(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        unique_together = ['user', 'post']  # Один репост на пользователя
+        unique_together = ['user', 'post']
     
     def __str__(self):
         return f'{self.user.username} reposted {self.post.author.username}\'s post'

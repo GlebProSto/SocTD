@@ -14,10 +14,25 @@
   <!-- Информация пользователя -->
   <div class="profile-info">
     <div class="profile-actions">
+      {% if user.username != request.user.username %}
+      <form method="post" action="{% url 'add_friend' user.username %}">
+        {% csrf_token %}
+        <button type="submit" class="edit-btn">
+          {% if is_friend %}Удалить из друзей{% else %}Добавить в друзья{% endif %}
+        </button>
+      </form>
+      {% else %}
       <button class="edit-btn">Редактировать профиль</button>
+      {% endif %}
     </div>
 
     <h1 class="profile-name">{{ user.username }}</h1>
+
+    <!-- Статистика -->
+    <div class="profile-stats">
+      <span class="stat-item"> <strong>{{ user.profile.get_following_count }}</strong> подписок </span>
+      <span class="stat-item"> <strong>{{ user.profile.get_followers_count }}</strong> подписчиков </span>
+    </div>
 
     {% if user.profile.bio %}
     <p class="profile-bio">{{ user.profile.bio }}</p>
@@ -29,10 +44,10 @@
   </div>
 
   <!-- Навигация профиля -->
-<nav class="profile-nav">
+  <nav class="profile-nav">
     <a href="?section=posts" class="profile-nav-item {% if section == 'posts' %}active{% endif %}">Посты</a>
     <a href="?section=repost" class="profile-nav-item {% if section == 'repost' %}active{% endif %}">Все посты</a>
-</nav>
+  </nav>
 
   <!-- Лента постов пользователя -->
   <div class="profile-posts">

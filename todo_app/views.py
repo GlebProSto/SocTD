@@ -3,7 +3,8 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.contrib.auth.models import User
-from .models import TodoPost, Comment, Profile, Repost
+from django.contrib import messages
+from .models import TodoPost, Comment, Profile, Repost, Friendship
 from .forms import CustomUserCreationForm, TodoPostForm, CommentForm, ProfileForm, RepostForm
 
 def home(request):
@@ -61,6 +62,41 @@ def profile(request):
         'section': section,
     })
 
+def user_profile(request, username):
+    user = get_object_or_404(User, username=username)
+    profile, created = Profile.objects.get_or_create(user=user)
+    
+    # Проверяем, являются ли пользователи друзьями
+    is_friend = False
+    if request.user.is_authenticated and request.user != user:
+        is_friend = Friendship.objects.filter(
+            from_user=request.user, 
+            to_user=user, 
+            accepted=True
+        ).exists()
+    
+    section = request.GET.get('section', 'posts')
+    
+    if section == 'posts':
+        posts = TodoPost.objects.filter(author=user).order_by('-created_at')
+    elif section == 'repost':
+        reposted_posts = TodoPost.objects.filter(
+            repost__user=user
+        ).order_by('-repost__created_at')
+        own_posts = TodoPost.objects.filter(author=user)
+        posts = (reposted_posts | own_posts).distinct().order_by('-created_at')
+    else:
+        posts = TodoPost.objects.filter(author=user).order_by('-created_at')
+    
+    context = {
+        'user': user,
+        'profile': profile,
+        'posts': posts,
+        'is_friend': is_friend,
+        'section': section
+    }
+    return render(request, 'profile.html', context)
+
 @login_required
 def create_post(request):
     if request.method == 'POST':
@@ -110,3 +146,29 @@ def add_comment(request, post_id):
             comment.save()
             return redirect('home')
     return redirect('home')
+
+@login_required
+def add_friend(request, username):
+    to_user = get_object_or_404(User, username=username)
+    
+    if request.user == to_user:
+        messages.error(request, "Нельзя добавить себя в друзья")
+        return redirect('user_profile', username=username)  # ← ЗАПЯТАЯ ДОБАВЛЕНА
+    
+    # Проверяем, существует ли уже заявка
+    friendship, created = Friendship.objects.get_or_create(
+        from_user=request.user,
+        to_user=to_user
+    )
+    
+    if created:
+        messages.success(request, f"Заявка в друзья отправлена {to_user.username}")
+        # Здесь можно добавить отправку уведомления
+    else:
+        if friendship.accepted:
+            friendship.delete()
+            messages.success(request, f"{to_user.username} удален из друзей")
+        else:
+            messages.info(request, "Заявка уже отправлена")
+    
+    return redirect('user_profile', username=username)  # ← ЗАПЯТАЯ ДОБАВЛЕНА

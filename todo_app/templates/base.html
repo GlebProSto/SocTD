@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SocTD</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="sidebar">
+        <a href="{% url 'home' %}" class="logo">🐦 SocTD</a>
+        <nav>
+          <a href="{% url 'home' %}" class="nav-item {% if request.path == '/' %}active{% endif %}">🏠 Домой</a>
+          <div class="nav-item">🔔 Уведомления</div>
+          <div class="nav-item">✉️ Сообщения</div>
+          <div class="nav-item">📋 Мои задачи</div>
+          <a href="{% url 'profile' %}" class="nav-item">👤 Профиль</a>
+        </nav>
+      </div>
+
+      <div class="main-content">{% block content %}{% endblock %}</div>
+
+      <div class="auth-buttons">
+        {% if user.is_authenticated %}
+        <form action="{% url 'logout' %}" method="post" style="display: inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline">Выйти</button>
+        </form>
+        {% else %}
+        <a href="{% url 'login' %}" class="btn btn-outline">Войти</a>
+        <a href="{% url 'register' %}" class="btn btn-primary">Регистрация</a>
+        {% endif %}
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,55 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+
+<div class="post-form-container">
+  <div class="post-form">
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'create_post' %}">
+      {% csrf_token %}
+      <textarea
+        name="content"
+        class="post-input"
+        placeholder="Что вы планируете сделать?"
+        rows="3"
+        maxlength="280"></textarea>
+      <button type="submit" class="post-button">Опубликовать</button>
+    </form>
+    {% else %}
+    <div class="fake-form">
+      <input
+        type="text"
+        class="post-input"
+        placeholder="Войдите или зарегистрируйтесь, чтобы опубликовать пост"
+        disabled />
+      <a href="{% url 'register' %}" class="post-button">Опубликовать</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="posts">
+  {% for post in posts %}
+  <div class="post">
+    <div class="post-header">
+      <span class="post-username">{{ post.author.username }}</span>
+      <span class="post-date">{{ post.created_at|timesince }} назад</span>
+    </div>
+
+    <div class="post-content">{{ post.content }}</div>
+
+    <div class="post-actions">
+      <form method="post" action="{% url 'like_post' post.id %}" class="like-form">
+        {% csrf_token %}
+        <button type="submit" class="action-btn">❤️ <span class="likes-count">{{ post.likes.count }}</span></button>
+      </form>
+
+      <form method="post" action="{% url 'repost_post' post.id %}" class="repost-form">
+        {% csrf_token %}
+        <button type="submit" class="action-btn">🔄 <span class="reposts-count">{{ post.reposts.count }}</span></button>
+      </form>
+
+      <button class="action-btn">💬 Комментировать</button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

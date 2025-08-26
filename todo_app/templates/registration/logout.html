@@ -1,0 +1,10 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+<div class="auth-form">
+  <h2>Выход из системы</h2>
+  <p>Вы успешно вышли из системы.</p>
+  <div class="form-links">
+    <p><a href="{% url 'login' %}">Войти снова</a></p>
+    <p><a href="{% url 'home' %}">Вернуться на главную</a></p>
+  </div>
+</div>
+{% endblock %}

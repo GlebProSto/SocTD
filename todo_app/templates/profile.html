@@ -1,0 +1,57 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+<div class="profile-container">
+  <!-- Шапка профиля -->
+  <div class="profile-cover">
+    <div class="profile-avatar">
+      {% if user.profile.profile_picture %}
+      <img src="{{ user.profile.profile_picture.url }}" alt="Аватар" class="avatar-img" />
+      {% else %}
+      <div class="avatar-placeholder">{{ user.username|first|upper }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Информация пользователя -->
+  <div class="profile-info">
+    <div class="profile-actions">
+      <button class="edit-btn">Редактировать профиль</button>
+    </div>
+
+    <h1 class="profile-name">{{ user.username }}</h1>
+
+    {% if user.profile.bio %}
+    <p class="profile-bio">{{ user.profile.bio }}</p>
+    {% endif %}
+
+    <div class="profile-meta">
+      <span class="profile-join-date">Присоединился {{ user.date_joined|date:"F Y" }}</span>
+    </div>
+  </div>
+
+  <!-- Навигация профиля -->
+<nav class="profile-nav">
+    <a href="?section=posts" class="profile-nav-item {% if section == 'posts' %}active{% endif %}">Посты</a>
+    <a href="?section=repost" class="profile-nav-item {% if section == 'repost' %}active{% endif %}">Все посты</a>
+</nav>
+
+  <!-- Лента постов пользователя -->
+  <div class="profile-posts">
+    {% if posts %} {% for post in posts %}
+    <div class="profile-post">
+      <div class="post-content">
+        <p>{{ post.content }}</p>
+      </div>
+      <div class="post-meta">
+        <span class="post-time">{{ post.created_at|date:"H:i" }}</span>
+        <span class="post-date">· {{ post.created_at|date:"d M Y" }}</span>
+      </div>
+    </div>
+    {% endfor %} {% else %}
+    <div class="empty-state">
+      <h3>Пока нет постов</h3>
+      <p>Когда вы опубликуете первый пост, он появится здесь.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

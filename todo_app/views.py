@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib import messages
-from .models import TodoPost, Comment, Profile, Repost, Friendship
+from .models import TodoPost, Comment, Profile, Repost, Friendship,Notification
 from .forms import CustomUserCreationForm, TodoPostForm, CommentForm, ProfileForm, RepostForm
 
 def home(request):
@@ -31,11 +31,12 @@ def register(request):
         form = CustomUserCreationForm()
     return render(request, 'registration/register.html', {'form': form})
 
+@login_required
 def profile(request):
     section = request.GET.get('section', 'posts')
     profile, created = Profile.objects.get_or_create(user=request.user)
     
-    if section == 'posts':
+    if section == 'posts':  
         posts = TodoPost.objects.filter(author=request.user).order_by('-created_at')
     elif section == 'repost':
         reposted_posts = TodoPost.objects.filter(
@@ -45,7 +46,6 @@ def profile(request):
         own_posts = TodoPost.objects.filter(author=request.user)
         
         posts = (reposted_posts | own_posts).distinct().order_by('-created_at')
-        posts = TodoPost.objects.filter(author=request.user).order_by('-created_at')
     
     if request.method == 'POST':
         form = ProfileForm(request.POST, request.FILES, instance=profile) 
@@ -56,6 +56,7 @@ def profile(request):
         form = ProfileForm(instance=profile)
     
     return render(request, 'profile.html', {
+        'user' : request.user,
         'form': form, 
         'profile': profile,
         'posts': posts,
@@ -66,7 +67,6 @@ def user_profile(request, username):
     user = get_object_or_404(User, username=username)
     profile, created = Profile.objects.get_or_create(user=user)
     
-    # Проверяем, являются ли пользователи друзьями
     is_friend = False
     if request.user.is_authenticated and request.user != user:
         is_friend = Friendship.objects.filter(
@@ -79,12 +79,10 @@ def user_profile(request, username):
     
     if section == 'posts':
         posts = TodoPost.objects.filter(author=user).order_by('-created_at')
+        reposts = []
     elif section == 'repost':
-        reposted_posts = TodoPost.objects.filter(
-            repost__user=user
-        ).order_by('-repost__created_at')
-        own_posts = TodoPost.objects.filter(author=user)
-        posts = (reposted_posts | own_posts).distinct().order_by('-created_at')
+        reposts = Repost.objects.filter(user=user).order_by('-created_at')
+        posts = []
     else:
         posts = TodoPost.objects.filter(author=user).order_by('-created_at')
     
@@ -93,7 +91,8 @@ def user_profile(request, username):
         'profile': profile,
         'posts': posts,
         'is_friend': is_friend,
-        'section': section
+        'section': section,
+        'reposts': reposts
     }
     return render(request, 'profile.html', context)
 
@@ -149,21 +148,33 @@ def add_comment(request, post_id):
 
 @login_required
 def add_friend(request, username):
+    print(f"Функция add_friend вызвана для пользователя: {username}")  # Отладка
     to_user = get_object_or_404(User, username=username)
     
     if request.user == to_user:
         messages.error(request, "Нельзя добавить себя в друзья")
-        return redirect('user_profile', username=username)  # ← ЗАПЯТАЯ ДОБАВЛЕНА
+        return redirect('user_profile', username=username) 
     
-    # Проверяем, существует ли уже заявка
     friendship, created = Friendship.objects.get_or_create(
         from_user=request.user,
         to_user=to_user
     )
     
+    print(f"Friendship created: {created}")  # Отладка
+    
     if created:
-        messages.success(request, f"Заявка в друзья отправлена {to_user.username}")
-        # Здесь можно добавить отправку уведомления
+        # Создаем уведомление
+        try:
+            notification = Notification.objects.create(
+                user=to_user,
+                from_user=request.user,
+                notification_type='friend_request'
+            )
+            print(f"Уведомление создано: {notification.id}")  # Отладка
+            messages.success(request, f"Заявка в друзья отправлена {to_user.username}")
+        except Exception as e:
+            print(f"Ошибка при создании уведомления: {e}")  # Отладка
+            messages.error(request, "Ошибка при отправке заявки")
     else:
         if friendship.accepted:
             friendship.delete()
@@ -171,4 +182,47 @@ def add_friend(request, username):
         else:
             messages.info(request, "Заявка уже отправлена")
     
-    return redirect('user_profile', username=username)  # ← ЗАПЯТАЯ ДОБАВЛЕНА
+    return redirect('user_profile', username=username)
+
+@login_required
+def accept_friend(request, notification_id):
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    
+    if notification.notification_type == 'friend_request':
+        # Принимаем заявку
+        friendship = Friendship.objects.get(
+            from_user=notification.from_user,
+            to_user=request.user
+        )
+        friendship.accepted = True
+        friendship.save()
+        
+        # Создаем уведомление о принятии
+        Notification.objects.create(
+            user=notification.from_user,
+            from_user=request.user,
+            notification_type='friend_accept'
+        )
+        
+        # Помечаем как прочитанное
+        notification.is_read = True
+        notification.save()
+        
+        messages.success(request, f"Вы приняли заявку в друзья от {notification.from_user.username}")
+    
+    return redirect('notifications')
+
+@login_required
+def notifications(request):
+    # Получаем все уведомления пользователя
+    user_notifications = Notification.objects.filter(
+        user=request.user
+    ).order_by('-created_at')
+    
+    # Помечаем как прочитанные при просмотре
+    unread_notifications = user_notifications.filter(is_read=False)
+    unread_notifications.update(is_read=True)
+    
+    return render(request, 'notifications.html', {
+        'notifications': user_notifications
+    })

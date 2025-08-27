@@ -8,9 +8,7 @@
     <link rel="stylesheet" href="{% static 'css/base.css' %}" />
     <link rel="stylesheet" href="{% static 'css/profile.css' %}" />
     <link rel="stylesheet" href="{% static 'css/home.css' %}" />
-    <link rel="stylesheet" href="{% static 'css/login.css' %}" />
-    <link rel="stylesheet" href="{% static 'css/logout.css' %}" />
-    <link rel="stylesheet" href="{% static 'css/register.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/notifications.css' %}" />
   </head>
   <body>
     <div class="container">
@@ -18,7 +16,7 @@
         <a href="{% url 'home' %}" class="logo">🐦 SocTD</a>
         <nav>
           <a href="{% url 'home' %}" class="nav-item {% if request.path == '/' %}active{% endif %}">🏠 Домой</a>
-          <div class="nav-item">🔔 Уведомления</div>
+          <a href="{% url "notifications" %}" class="nav-item">🔔 Уведомления</a>
           <div class="nav-item">✉️ Сообщения</div>
           <div class="nav-item">📋 Мои задачи</div>
           <a href="{% url 'profile' %}" class="nav-item">👤 Профиль</a>

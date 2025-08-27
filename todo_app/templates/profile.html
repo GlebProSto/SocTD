@@ -14,14 +14,17 @@
   <!-- Информация пользователя -->
   <div class="profile-info">
     <div class="profile-actions">
-      {% if user.username != request.user.username %}
-      <form method="post" action="{% url 'add_friend' user.username %}">
+      {% if request.user != user %} {% if not is_friend %}
+      <form action="{% url 'add_friend' user.username %}" method="post">
         {% csrf_token %}
-        <button type="submit" class="edit-btn">
-          {% if is_friend %}Удалить из друзей{% else %}Добавить в друзья{% endif %}
-        </button>
+        <button type="submit">Добавить в друзья</button>
       </form>
       {% else %}
+      <form action="{% url 'add_friend' user.username %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Удалить из друзей</button>
+      </form>
+      {% endif %} {% else %}
       <button class="edit-btn">Редактировать профиль</button>
       {% endif %}
     </div>
@@ -51,6 +54,31 @@
 
   <!-- Лента постов пользователя -->
   <div class="profile-posts">
+    {% if section == 'repost' %}
+    <!-- Раздел "Все посты" - показываем репосты -->
+    {% if posts %} {% for post in posts %}
+    <div class="profile-post">
+      <div class="post-header">
+        <!-- Показываем, кто автор оригинального поста -->
+        <span class="repost-info">
+          {% if post.author != user %} 🔁 Репостнул от @{{ post.author.username }} {% endif %}
+        </span>
+      </div>
+      <div class="post-content">
+        <p>{{ post.content }}</p>
+      </div>
+      <div class="post-meta">
+        <span class="post-time">{{ post.created_at|date:"H:i" }}</span>
+        <span class="post-date">· {{ post.created_at|date:"d M Y" }}</span>
+      </div>
+    </div>
+    {% endfor %} {% else %}
+    <div class="empty-state">
+      <h3>Пока нет репостов</h3>
+      <p>Когда вы сделаете репост, он появится здесь.</p>
+    </div>
+    {% endif %} {% else %}
+    <!-- Раздел "Посты" - показываем только оригинальные -->
     {% if posts %} {% for post in posts %}
     <div class="profile-post">
       <div class="post-content">
@@ -66,7 +94,7 @@
       <h3>Пока нет постов</h3>
       <p>Когда вы опубликуете первый пост, он появится здесь.</p>
     </div>
-    {% endif %}
+    {% endif %} {% endif %}
   </div>
 </div>
 {% endblock %}

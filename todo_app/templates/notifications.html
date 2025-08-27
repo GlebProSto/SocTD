@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="notifications-container">
+    <div class="notifications-header">
+        <h1>Уведомления</h1>
+    </div>
+
+    <div class="notifications-list">
+        {% for notification in notifications %}
+        <div class="notification {% if not notification.is_read %}unread{% endif %}">
+            <div class="notification-avatar">
+                {% if notification.from_user.profile.profile_picture %}
+                    <img src="{{ notification.from_user.profile.profile_picture.url }}" alt="Аватар">
+                {% else %}
+                    <div class="avatar-placeholder">
+                        {{ notification.from_user.username|first|upper }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="notification-content">
+                <p class="notification-text">
+                    <strong>{{ notification.from_user.username }}</strong>
+                    
+                    {% if notification.notification_type == 'friend_request' %}
+                        отправил(а) вам заявку в друзья
+                    {% elif notification.notification_type == 'friend_accept' %}
+                        принял(а) вашу заявку в друзья
+                    {% elif notification.notification_type == 'like' %}
+                        лайкнул(а) ваш пост
+                    {% elif notification.notification_type == 'comment' %}
+                        прокомментировал(а) ваш пост
+                    {% elif notification.notification_type == 'repost' %}
+                        сделал(а) репост вашего поста
+                    {% endif %}
+                </p>
+                
+                <span class="notification-time">
+                    {{ notification.created_at|timesince }} назад
+                </span>
+                
+                {% if notification.notification_type == 'friend_request' and not notification.is_read %}
+                <div class="notification-actions">
+                    <form method="post" action="{% url 'accept_friend' notification.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-sm">Принять</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-notifications">
+            <p>У вас пока нет уведомлений</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -17,12 +17,12 @@
       {% if request.user != user %} {% if not is_friend %}
       <form action="{% url 'add_friend' user.username %}" method="post">
         {% csrf_token %}
-        <button type="submit">Добавить в друзья</button>
+        <button class="edit-btn" type="submit">Добавить в друзья</button>
       </form>
       {% else %}
       <form action="{% url 'add_friend' user.username %}" method="post">
         {% csrf_token %}
-        <button type="submit">Удалить из друзей</button>
+        <button class="edit-btn" type="submit">Удалить из друзей</button>
       </form>
       {% endif %} {% else %}
       <button class="edit-btn">Редактировать профиль</button>

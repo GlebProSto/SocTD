@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from .models import TodoPost, Comment, Profile, Repost, Friendship,Notification
 from .forms import CustomUserCreationForm, TodoPostForm, CommentForm, ProfileForm, RepostForm
+from django.db.models import Q
 
 def home(request):
     posts = TodoPost.objects.all().order_by('-created_at')
@@ -148,39 +149,43 @@ def add_comment(request, post_id):
 
 @login_required
 def add_friend(request, username):
-    print(f"Функция add_friend вызвана для пользователя: {username}")  # Отладка
     to_user = get_object_or_404(User, username=username)
     
     if request.user == to_user:
         messages.error(request, "Нельзя добавить себя в друзья")
         return redirect('user_profile', username=username) 
     
-    friendship, created = Friendship.objects.get_or_create(
-        from_user=request.user,
-        to_user=to_user
-    )
+    # Проверяем, не существует ли уже дружбы в любом направлении
+    existing_friendship = Friendship.objects.filter(
+        (Q(from_user=request.user, to_user=to_user) |
+         Q(from_user=to_user, to_user=request.user))
+    ).first()
     
-    print(f"Friendship created: {created}")  # Отладка
-    
-    if created:
-        # Создаем уведомление
-        try:
-            notification = Notification.objects.create(
-                user=to_user,
-                from_user=request.user,
-                notification_type='friend_request'
-            )
-            print(f"Уведомление создано: {notification.id}")  # Отладка
-            messages.success(request, f"Заявка в друзья отправлена {to_user.username}")
-        except Exception as e:
-            print(f"Ошибка при создании уведомления: {e}")  # Отладка
-            messages.error(request, "Ошибка при отправке заявки")
-    else:
-        if friendship.accepted:
-            friendship.delete()
+    if existing_friendship:
+        if existing_friendship.accepted:
+            # Удаляем обе записи о дружбе
+            Friendship.objects.filter(
+                Q(from_user=request.user, to_user=to_user) |
+                Q(from_user=to_user, to_user=request.user)
+            ).delete()
             messages.success(request, f"{to_user.username} удален из друзей")
         else:
             messages.info(request, "Заявка уже отправлена")
+    else:
+        # Создаем новую заявку в друзья
+        friendship = Friendship.objects.create(
+            from_user=request.user,
+            to_user=to_user,
+            accepted=False
+        )
+        
+        # Создаем уведомление
+        Notification.objects.create(
+            user=to_user,
+            from_user=request.user,
+            notification_type='friend_request'
+        )
+        messages.success(request, f"Заявка в друзья отправлена {to_user.username}")
     
     return redirect('user_profile', username=username)
 
@@ -196,6 +201,18 @@ def accept_friend(request, notification_id):
         )
         friendship.accepted = True
         friendship.save()
+        
+        
+        reverse_friendship, created = Friendship.objects.get_or_create(
+            from_user=request.user,
+            to_user=notification.from_user,
+            defaults={'accepted': True}  # Автоматически принимаем обратную связь
+        )
+        
+        # Если запись уже существовала, но не была принята
+        if not created and not reverse_friendship.accepted:
+            reverse_friendship.accepted = True
+            reverse_friendship.save()
         
         # Создаем уведомление о принятии
         Notification.objects.create(

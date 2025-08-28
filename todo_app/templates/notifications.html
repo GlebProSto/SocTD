@@ -41,7 +41,7 @@
                     {{ notification.created_at|timesince }} назад
                 </span>
                 
-                {% if notification.notification_type == 'friend_request' and not notification.is_read %}
+                {% if notification.notification_type == 'friend_request' %}
                 <div class="notification-actions">
                     <form method="post" action="{% url 'accept_friend' notification.id %}">
                         {% csrf_token %}

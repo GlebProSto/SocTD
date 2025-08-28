@@ -49,6 +49,59 @@
         <button type="submit" class="action-btn">❤️ <span class="likes-count">{{ post.likes.count }}</span></button>
       </form>
 
+      <script>
+        // JavaScript обрабатывает форму без перезагрузки
+        document.querySelectorAll('.like-form').forEach(form => {
+          form.addEventListener('submit', async function (e) {
+            e.preventDefault() // Отменяем стандартную отправку формы
+
+            const response = await fetch(this.action, {
+              method: 'POST',
+              headers: {
+                'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
+              },
+            })
+
+            const data = await response.json()
+
+            // Обновляем только счетчик лайков
+            this.querySelector('.likes-count').textContent = data.likes_count
+
+            // Меняем стиль кнопки
+            if (data.liked) {
+              this.querySelector('button').style.color = 'red'
+            } else {
+              this.querySelector('button').style.color = 'gray'
+            }
+          })
+        })
+        // Обработчик для репостов (НОВЫЙ КОД)
+        document.querySelectorAll('.repost-form').forEach(form => {
+          form.addEventListener('submit', async function (e) {
+            e.preventDefault()
+
+            const response = await fetch(this.action, {
+              method: 'POST',
+              headers: {
+                'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
+              },
+            })
+
+            const data = await response.json()
+
+            // Обновляем счетчик репостов
+            this.querySelector('.reposts-count').textContent = data.reposts_count
+
+            // Меняем стиль кнопки
+            if (data.reposted) {
+              this.querySelector('button').style.color = 'green'
+            } else {
+              this.querySelector('button').style.color = 'gray'
+            }
+          })
+        })
+      </script>
+
       <form method="post" action="{% url 'repost_post' post.id %}" class="repost-form">
         {% csrf_token %}
         <button type="submit" class="action-btn">🔄 <span class="reposts-count">{{ post.reposts.count }}</span></button>

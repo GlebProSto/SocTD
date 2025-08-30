@@ -1,0 +1,21 @@
+{% extends "base.html" %} {% load static %} {% block content %}
+<form method="post" action="{% url 'create' %}">
+  {% csrf_token %}
+
+  <div>
+    <label for="{{form.title.id_for_label }}">Название дня:</label>
+    {{ form.title }} {% if form.title.errors %}
+    <div class="error">{{ form.title.errors }}</div>
+    {% endif %}
+  </div>
+  <div class="field">
+    <label for="{{ form.date.id_for_label }}">Дата:</label>
+    {{ form.date }} {% if form.date.errors %}
+    <div class="error">{{ form.date.errors }}</div>
+    {% endif %}
+  </div>
+
+  <button type="submit">Создать</button>
+</form>
+
+{% endblock %}

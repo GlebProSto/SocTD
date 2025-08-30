@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import TodoPost, Comment, Profile, Repost
+from .models import TodoPost, Comment, Profile, Repost,SubTask,TaskList
 
 class CustomUserCreationForm(UserCreationForm):
     username = forms.CharField(
@@ -32,13 +32,6 @@ class TodoPostForm(forms.ModelForm):
     class Meta:
         model = TodoPost
         fields = ['content']
-        widgets = {
-            'content': forms.Textarea(attrs={
-                'placeholder': 'Что вы планируете сделать?',
-                'rows': 3,
-                'maxlength': 280
-            }),
-        }
 
 class RepostForm(forms.ModelForm):
     class Meta:
@@ -60,3 +53,29 @@ class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields ="__all__"
+
+class TaskListForm(forms.ModelForm):
+    class Meta:
+        model = TaskList
+        fields = ['title', 'date']  # только эти поля из модели
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'placeholder': 'Название вашего дня...',
+                'maxlength': 200
+            }),
+            'date': forms.DateInput(attrs={
+                'type': 'date'  # для выбора даты
+            })
+        }
+class SubTaskForm(forms.ModelForm):
+    class Meta:
+        model = SubTask
+        fields = ['text']  # используй поле 'text' которое уже есть!
+        widgets = {
+            'text': forms.Textarea(attrs={
+                'placeholder': 'Что вы планируете сделать?',
+                'rows': 3,
+                'maxlength': 280
+            })
+        }
+        

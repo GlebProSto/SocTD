@@ -1,5 +1,4 @@
 {% extends 'base.html' %} {% load static %} {% block content %}
-
 <div class="post-form-container">
   <div class="post-form">
     {% if user.is_authenticated %}
@@ -44,72 +43,169 @@
     <div class="post-content">{{ post.content }}</div>
 
     <div class="post-actions">
+      <!-- Лайки -->
       <form method="post" action="{% url 'like_post' post.id %}" class="like-form">
         {% csrf_token %}
-        <button type="submit" class="action-btn">❤️ <span class="likes-count">{{ post.likes.count }}</span></button>
+        <button type="submit" class="action-btn">❤️ {{ post.likes.count }}</button>
       </form>
 
-      <script>
-        // JavaScript обрабатывает форму без перезагрузки
-        document.querySelectorAll('.like-form').forEach(form => {
-          form.addEventListener('submit', async function (e) {
-            e.preventDefault() // Отменяем стандартную отправку формы
-
-            const response = await fetch(this.action, {
-              method: 'POST',
-              headers: {
-                'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
-              },
-            })
-
-            const data = await response.json()
-
-            // Обновляем только счетчик лайков
-            this.querySelector('.likes-count').textContent = data.likes_count
-
-            // Меняем стиль кнопки
-            if (data.liked) {
-              this.querySelector('button').style.color = 'red'
-            } else {
-              this.querySelector('button').style.color = 'gray'
-            }
-          })
-        })
-        // Обработчик для репостов (НОВЫЙ КОД)
-        document.querySelectorAll('.repost-form').forEach(form => {
-          form.addEventListener('submit', async function (e) {
-            e.preventDefault()
-
-            const response = await fetch(this.action, {
-              method: 'POST',
-              headers: {
-                'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
-              },
-            })
-
-            const data = await response.json()
-
-            // Обновляем счетчик репостов
-            this.querySelector('.reposts-count').textContent = data.reposts_count
-
-            // Меняем стиль кнопки
-            if (data.reposted) {
-              this.querySelector('button').style.color = 'green'
-            } else {
-              this.querySelector('button').style.color = 'gray'
-            }
-          })
-        })
-      </script>
-
+      <!-- Репосты -->
       <form method="post" action="{% url 'repost_post' post.id %}" class="repost-form">
         {% csrf_token %}
-        <button type="submit" class="action-btn">🔄 <span class="reposts-count">{{ post.reposts.count }}</span></button>
+        <button type="submit" class="action-btn">🔄 {{ post.reposts.count }}</button>
       </form>
 
-      <button class="action-btn">💬 Комментировать</button>
+      <!-- Кнопка для показа комментариев -->
+      <button
+        class="action-btn show-comments-btn"
+        data-post-id="{{ post.id }}"
+        data-comments-count="{{ post.comments.count }}">
+        💬 Комментировать ({{ post.comments.count }})
+      </button>
+    </div>
+
+    <!-- БЛОК КОММЕНТАРИЕВ (изначально скрыт) -->
+    <div class="comments-section" id="comments-{{ post.id }}" style="display: none">
+      <!-- Форма для нового комментария СВЕРХУ -->
+      {% if user.is_authenticated %}
+      <form method="post" action="{% url 'add_comment' post.id %}" class="comment-form">
+        {% csrf_token %}
+        <textarea
+          name="content"
+          class="post-input"
+          placeholder="Напишите комментарий..."
+          rows="2"
+          maxlength="280"
+          required></textarea>
+        <button type="submit" class="action-btn">Отправить</button>
+      </form>
+      {% else %}
+      <p class="login-to-comment"><a href="{% url 'login' %}">Войдите</a>, чтобы оставить комментарий</p>
+      {% endif %}
+
+      <!-- Существующие комментарии -->
+      <div class="existing-comments">
+        <h4>Комментарии ({{ post.comments.count }}):</h4>
+        {% for comment in post.comments.all %}
+        <div class="comment">
+          <strong>{{ comment.author.username }}:</strong>
+          {{ comment.content }}
+          <small>{{ comment.created_at|timesince }} назад</small>
+        </div>
+        {% empty %}
+        <p class="no-comments">Пока нет комментариев. Будьте первым!</p>
+        {% endfor %}
+      </div>
     </div>
   </div>
   {% endfor %}
 </div>
+
+<script>
+  // Лайки
+  document.querySelectorAll('.like-form').forEach(form => {
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault()
+      const response = await fetch(this.action, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value },
+      })
+      const data = await response.json()
+      this.querySelector('button').textContent = '❤️ ' + data.likes_count
+      this.querySelector('button').style.color = data.liked ? 'red' : 'gray'
+    })
+  })
+
+  // Репосты
+  document.querySelectorAll('.repost-form').forEach(form => {
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault()
+      const response = await fetch(this.action, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value },
+      })
+      const data = await response.json()
+      this.querySelector('button').textContent = '🔄 ' + data.reposts_count
+      this.querySelector('button').style.color = data.reposted ? 'green' : 'gray'
+    })
+  })
+
+  // ПОКАЗ/СКРЫТИЕ КОММЕНТАРИЕВ
+  document.querySelectorAll('.show-comments-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const postId = this.getAttribute('data-post-id')
+      const commentsCount = this.getAttribute('data-comments-count')
+      const commentsSection = document.getElementById('comments-' + postId)
+
+      if (commentsSection.style.display === 'none') {
+        commentsSection.style.display = 'block'
+        this.textContent = '❌ Скрыть комментарии'
+      } else {
+        commentsSection.style.display = 'none'
+        this.textContent = '💬 Комментировать (' + commentsCount + ')'
+      }
+    })
+  })
+
+  // Обработчик для отправки комментариев
+  document.querySelectorAll('.comment-form').forEach(form => {
+    form.addEventListener('submit', function (e) {
+      // Пусть форма отправляется стандартным образом
+      // Страница перезагрузится и комментарий добавится
+    })
+  })
+</script>
+
+<style>
+  .comments-section {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 8px;
+  }
+
+  .comment-form {
+    margin-bottom: 20px;
+  }
+
+  .existing-comments {
+    margin-top: 15px;
+  }
+
+  .existing-comments h4 {
+    margin-bottom: 10px;
+    color: #333;
+    font-size: 16px;
+  }
+
+  .comment {
+    padding: 10px;
+    margin-bottom: 10px;
+    background: white;
+    border-radius: 6px;
+    border-left: 3px solid #007bff;
+  }
+
+  .comment strong {
+    color: #007bff;
+  }
+
+  .comment small {
+    color: #666;
+    font-size: 12px;
+    margin-left: 10px;
+  }
+
+  .no-comments {
+    color: #666;
+    font-style: italic;
+    padding: 10px;
+  }
+
+  .login-to-comment {
+    text-align: center;
+    color: #666;
+    padding: 10px;
+  }
+</style>
 {% endblock %}

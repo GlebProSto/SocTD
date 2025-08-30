@@ -104,3 +104,53 @@
 .action-btn:hover {
   color: var(--main-color);
 }
+.comments-section {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.comment-form {
+  margin-bottom: 20px;
+}
+
+.existing-comments {
+  margin-top: 15px;
+}
+
+.existing-comments h4 {
+  margin-bottom: 10px;
+  color: #333;
+  font-size: 16px;
+}
+
+.comment {
+  padding: 10px;
+  margin-bottom: 10px;
+  background: white;
+  border-radius: 6px;
+  border-left: 3px solid #007bff;
+}
+
+.comment strong {
+  color: #007bff;
+}
+
+.comment small {
+  color: #666;
+  font-size: 12px;
+  margin-left: 10px;
+}
+
+.no-comments {
+  color: #666;
+  font-style: italic;
+  padding: 10px;
+}
+
+.login-to-comment {
+  text-align: center;
+  color: #666;
+  padding: 10px;
+}

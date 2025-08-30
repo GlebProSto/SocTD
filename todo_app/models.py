@@ -74,3 +74,28 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.from_user.username} → {self.user.username}: {self.notification_type}"
+    
+class SubTask(models.Model):
+    text = models.CharField(max_length=280) 
+    completed = models.BooleanField(default=False)  
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return self.text
+    
+class TaskList(models.Model):  # лучшее название - "Список задач"
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)  # название списка
+    date = models.DateField()  # дата для этих задач
+    subtasks = models.ManyToManyField(SubTask)  # много подзадач
+    @property
+    def completion_percentage(self):
+        # Подсчет процента выполнения
+        total = self.subtasks.count()
+        if total == 0:
+            return 0
+        completed = self.subtasks.filter(completed=True).count()
+        return (completed / total) * 100
+
+
+
+

@@ -4,8 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib import messages
-from .models import TodoPost, Comment, Profile, Repost, Friendship,Notification
-from .forms import CustomUserCreationForm, TodoPostForm, CommentForm, ProfileForm, RepostForm
+from .models import TodoPost, Comment, Profile, Repost, Friendship,Notification,SubTask,TaskList
+from .forms import CustomUserCreationForm, TodoPostForm, CommentForm, ProfileForm, RepostForm,SubTaskForm,TaskListForm
 from django.db.models import Q
 
 def home(request):
@@ -20,7 +20,8 @@ def home(request):
         return render(request, 'home.html',{
             'posts' : posts
         }) 
-
+ 
+    
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -108,6 +109,34 @@ def create_post(request):
             return redirect('home')
     return redirect('home')
 
+    
+@login_required
+def create_tasks(request):
+    if request.method == 'POST':
+        form = TaskListForm(request.POST)
+        if form.is_valid():
+            tasklist = form.save(commit=False)
+            tasklist.user = request.user    
+            tasklist.save()
+            return redirect('create')
+    else:
+        form = TaskListForm()
+    
+    return render(request, 'tasks.html', {'form': form})
+
+# @login_required
+# def add_subtask():
+    
+
+# @login_required
+# def toggle_subtask():
+
+
+# @login_required
+# def delete_tasklist():
+
+
+
 @login_required
 def like_post(request, post_id):
     post = get_object_or_404(TodoPost, id=post_id)
@@ -137,14 +166,18 @@ def repost_post(request, post_id):
 @login_required
 def add_comment(request, post_id):
     post = get_object_or_404(TodoPost, id=post_id)
+    
     if request.method == 'POST':
-        form = CommentForm(request.POST)
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.post = post
-            comment.author = request.user
-            comment.save()
-            return redirect('home')
+        # Простая проверка - есть ли текст
+        content = request.POST.get('content', '').strip()
+        if content:
+            Comment.objects.create(
+                post=post,
+                author=request.user,
+                content=content
+            )
+    
+    # Всегда редиректим обратно на home
     return redirect('home')
 
 @login_required
@@ -243,3 +276,6 @@ def notifications(request):
     return render(request, 'notifications.html', {
         'notifications': user_notifications
     })
+
+
+

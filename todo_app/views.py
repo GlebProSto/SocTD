@@ -112,6 +112,7 @@ def create_post(request):
     
 @login_required
 def create_tasks(request):
+    task_list = TaskList.objects.all().order_by('-created_at')
     if request.method == 'POST':
         form = TaskListForm(request.POST)
         if form.is_valid():
@@ -122,7 +123,7 @@ def create_tasks(request):
     else:
         form = TaskListForm()
     
-    return render(request, 'tasks.html', {'form': form})
+    return render(request, 'tasks.html', {'form': form,'task_list' : task_list})
 
 # @login_required
 # def add_subtask():

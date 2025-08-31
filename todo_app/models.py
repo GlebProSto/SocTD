@@ -1,4 +1,5 @@
 # todo_app/models.py
+import datetime
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
@@ -87,6 +88,7 @@ class TaskList(models.Model):  # лучшее название - "Список �
     title = models.CharField(max_length=200)  # название списка
     date = models.DateField()  # дата для этих задач
     subtasks = models.ManyToManyField(SubTask)  # много подзадач
+    created_at = models.DateTimeField(default=datetime.datetime.now)
     @property
     def completion_percentage(self):
         # Подсчет процента выполнения

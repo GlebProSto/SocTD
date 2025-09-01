@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
@@ -133,13 +134,41 @@ def tasks(request):
 @login_required
 def task_detail(request, task_id):
     task = get_object_or_404(TaskList, id=task_id, user=request.user)
-    subtask_list = task.subtasks.all().order_by('-created_at')
+    subtask_list = task.subtasks.all().order_by('completed', '-created_at')
     subtask_form = SubTaskForm()
     return render(request, 'task_detail.html', {
         'task': task, 
         'subtask_form': subtask_form, 
         'subtask_list': subtask_list
     })
+
+@login_required
+def subtask_toggle(request, subtask_id):
+    subtask = get_object_or_404(SubTask, id=subtask_id)
+    
+    # Получаем TaskList, к которому привязана подзадача (через M2M связь)
+    # Берем первый попавшийся, обычно подзадача принадлежит только одному списку
+    tasklist = subtask.tasklist_set.first()
+    
+    # Проверяем права доступа
+    if not tasklist or tasklist.user != request.user:
+        return redirect('tasks')  # или на страницу задачи, если есть task_id
+    
+    if request.method == 'POST':
+        subtask.completed = not subtask.completed
+        subtask.save()
+    
+    return redirect('task_detail', task_id=tasklist.id)
+@login_required
+def like_post(request, post_id):
+    post = get_object_or_404(TodoPost, id=post_id)
+    if request.user in post.likes.all():
+        post.likes.remove(request.user)
+        liked = False
+    else:
+        post.likes.add(request.user)
+        liked = True
+    return JsonResponse({'liked': liked, 'likes_count': post.likes.count()})
     
 @login_required
 def add_subtask(request,task_id):
@@ -203,7 +232,6 @@ def add_friend(request, username):
         messages.error(request, "Нельзя добавить себя в друзья")
         return redirect('user_profile', username=username) 
     
-    # Проверяем, не существует ли уже дружбы в любом направлении
     existing_friendship = Friendship.objects.filter(
         (Q(from_user=request.user, to_user=to_user) |
          Q(from_user=to_user, to_user=request.user))
@@ -211,7 +239,6 @@ def add_friend(request, username):
     
     if existing_friendship:
         if existing_friendship.accepted:
-            # Удаляем обе записи о дружбе
             Friendship.objects.filter(
                 Q(from_user=request.user, to_user=to_user) |
                 Q(from_user=to_user, to_user=request.user)
@@ -220,14 +247,12 @@ def add_friend(request, username):
         else:
             messages.info(request, "Заявка уже отправлена")
     else:
-        # Создаем новую заявку в друзья
         friendship = Friendship.objects.create(
             from_user=request.user,
             to_user=to_user,
             accepted=False
         )
         
-        # Создаем уведомление
         Notification.objects.create(
             user=to_user,
             from_user=request.user,
@@ -242,7 +267,6 @@ def accept_friend(request, notification_id):
     notification = get_object_or_404(Notification, id=notification_id, user=request.user)
     
     if notification.notification_type == 'friend_request':
-        # Принимаем заявку
         friendship = Friendship.objects.get(
             from_user=notification.from_user,
             to_user=request.user
@@ -254,22 +278,19 @@ def accept_friend(request, notification_id):
         reverse_friendship, created = Friendship.objects.get_or_create(
             from_user=request.user,
             to_user=notification.from_user,
-            defaults={'accepted': True}  # Автоматически принимаем обратную связь
+            defaults={'accepted': True}
         )
-        
-        # Если запись уже существовала, но не была принята
+
         if not created and not reverse_friendship.accepted:
             reverse_friendship.accepted = True
             reverse_friendship.save()
         
-        # Создаем уведомление о принятии
         Notification.objects.create(
             user=notification.from_user,
             from_user=request.user,
             notification_type='friend_accept'
         )
         
-        # Помечаем как прочитанное
         notification.is_read = True
         notification.save()
         
@@ -279,12 +300,10 @@ def accept_friend(request, notification_id):
 
 @login_required
 def notifications(request):
-    # Получаем все уведомления пользователя
     user_notifications = Notification.objects.filter(
         user=request.user
     ).order_by('-created_at')
     
-    # Помечаем как прочитанные при просмотре
     unread_notifications = user_notifications.filter(is_read=False)
     unread_notifications.update(is_read=True)
     

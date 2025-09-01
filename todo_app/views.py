@@ -112,30 +112,59 @@ def create_post(request):
     
 @login_required
 def create_tasks(request):
-    task_list = TaskList.objects.all().order_by('-created_at')
     if request.method == 'POST':
         form = TaskListForm(request.POST)
         if form.is_valid():
             tasklist = form.save(commit=False)
             tasklist.user = request.user    
             tasklist.save()
-            return redirect('create')
+            return redirect('tasks')
     else:
         form = TaskListForm()
     
-    return render(request, 'tasks.html', {'form': form,'task_list' : task_list})
+    return render(request, 'task_create.html', {'form': form})
 
-# @login_required
-# def add_subtask():
+@login_required
+def tasks(request):
+    task_list = TaskList.objects.filter(user=request.user).order_by('-created_at')
+    if request.user:
+        return render(request,'tasks.html',{'task_list':task_list})
+
+@login_required
+def task_detail(request, task_id):
+    task = get_object_or_404(TaskList, id=task_id, user=request.user)
+    subtask_list = task.subtasks.all().order_by('-created_at')
+    subtask_form = SubTaskForm()
+    return render(request, 'task_detail.html', {
+        'task': task, 
+        'subtask_form': subtask_form, 
+        'subtask_list': subtask_list
+    })
     
+@login_required
+def add_subtask(request,task_id):
+    task = get_object_or_404(TaskList, id=task_id,user=request.user)
+    if request.method == 'POST':
+        form = SubTaskForm(request.POST)
+        if form.is_valid():
+            new_subtask = form.save()
+            task.subtasks.add(new_subtask)
+            return redirect('task_detail', task_id=task_id)
 
-# @login_required
-# def toggle_subtask():
-
-
-# @login_required
-# def delete_tasklist():
-
+@login_required
+def add_comment(request, post_id):
+    post = get_object_or_404(TodoPost, id=post_id)
+    
+    if request.method == 'POST':
+        content = request.POST.get('content', '').strip()
+        if content:
+            Comment.objects.create(
+                post=post,
+                author=request.user,
+                content=content
+            )
+    
+    return redirect('home')
 
 
 @login_required
@@ -164,22 +193,7 @@ def repost_post(request, post_id):
         'reposts_count': post.reposts.count()
     })
 
-@login_required
-def add_comment(request, post_id):
-    post = get_object_or_404(TodoPost, id=post_id)
-    
-    if request.method == 'POST':
-        # Простая проверка - есть ли текст
-        content = request.POST.get('content', '').strip()
-        if content:
-            Comment.objects.create(
-                post=post,
-                author=request.user,
-                content=content
-            )
-    
-    # Всегда редиректим обратно на home
-    return redirect('home')
+
 
 @login_required
 def add_friend(request, username):

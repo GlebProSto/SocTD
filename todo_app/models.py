@@ -83,15 +83,14 @@ class SubTask(models.Model):
     def __str__(self):
         return self.text
     
-class TaskList(models.Model):  # лучшее название - "Список задач"
+class TaskList(models.Model): 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    title = models.CharField(max_length=200)  # название списка
-    date = models.DateField()  # дата для этих задач
-    subtasks = models.ManyToManyField(SubTask)  # много подзадач
+    title = models.CharField(max_length=200) 
+    date = models.DateField() 
+    subtasks = models.ManyToManyField(SubTask)
     created_at = models.DateTimeField(default=datetime.datetime.now)
     @property
     def completion_percentage(self):
-        # Подсчет процента выполнения
         total = self.subtasks.count()
         if total == 0:
             return 0

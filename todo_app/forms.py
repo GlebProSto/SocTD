@@ -57,25 +57,21 @@ class ProfileForm(forms.ModelForm):
 class TaskListForm(forms.ModelForm):
     class Meta:
         model = TaskList
-        fields = ['title', 'date']  # только эти поля из модели
+        fields = ['title', 'date']
         widgets = {
             'title': forms.TextInput(attrs={
                 'placeholder': 'Название вашего дня...',
                 'maxlength': 200
             }),
             'date': forms.DateInput(attrs={
-                'type': 'date'  # для выбора даты
+                'type': 'date' 
             })
         }
 class SubTaskForm(forms.ModelForm):
     class Meta:
         model = SubTask
-        fields = ['text']  # используй поле 'text' которое уже есть!
+        fields = ['text'] 
         widgets = {
-            'text': forms.Textarea(attrs={
-                'placeholder': 'Что вы планируете сделать?',
-                'rows': 3,
-                'maxlength': 280
-            })
+            'text': forms.TextInput(attrs={'placeholder': 'Введите текст подзадачи...'})
         }
         

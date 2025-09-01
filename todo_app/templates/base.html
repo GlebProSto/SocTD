@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="{% static 'css/profile.css' %}" />
     <link rel="stylesheet" href="{% static 'css/home.css' %}" />
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/tasks.css' %}" />
   </head>
   <body>
     <div class="container">
@@ -18,7 +19,7 @@
           <a href="{% url 'home' %}" class="nav-item {% if request.path == '/' %}active{% endif %}">🏠 Домой</a>
           <a href="{% url "notifications" %}" class="nav-item">🔔 Уведомления</a>
           <div class="nav-item">✉️ Сообщения</div>
-          <a href="{% url 'create' %}" class="nav-item">📋 Мои задачи</a>
+          <a href="{% url 'tasks' %}" class="nav-item">📋 Мои задачи</a>
           <a href="{% url 'profile' %}" class="nav-item">👤 Профиль</a>
         </nav>
       </div>

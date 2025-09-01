@@ -1,21 +1,31 @@
 {% extends "base.html" %} {% load static %} {% block content %}
-<form method="post" action="{% url 'create' %}">
-  {% csrf_token %}
-  <h1>Задачи</h1>
-  <div>
-    <label for="{{form.title.id_for_label }}">Имя задач:</label>
-    {{ form.title }} {% if form.title.errors %}
-    <div class="error">{{ form.title.errors }}</div>
-    {% endif %}
-  </div>
-  <div class="field">
-    <label for="{{ form.date.id_for_label }}">Дата:</label>
-    {{ form.date }} {% if form.date.errors %}
-    <div class="error">{{ form.date.errors }}</div>
-    {% endif %}
+<div class="tasks-container">
+  <div class="tasks-header">
+    <h1 class="tasks-title">Мои задачи</h1>
+    <a href="{% url 'create_tasks' %}" class="create-task-btn">
+      <span class="btn-icon">+</span>
+      Создать задачу
+    </a>
   </div>
 
-  <button type="submit">Добавить свою задачу</button>
-</form>
-
+  <div class="tasks-list">
+    {% if task_list %} {% for task in task_list %}
+    <a href="{% url 'task_detail' task.id %}" class="task-card">
+      <div class="task-content">
+        <h3 class="task-title">{{ task.title }}</h3>
+        <div class="task-meta">
+          <span class="task-date"> 📅 {{ task.date }} </span>
+        </div>
+      </div>
+      <div class="task-arrow">→</div>
+    </a>
+    {% endfor %} {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📝</div>
+      <h3 class="empty-title">У вас пока нет задач</h3>
+      <p class="empty-text">Создайте первую задачу чтобы начать</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %} {% load static %} {% block content %}
+<div class="create-task-container">
+  <!-- Заголовок -->
+  <div class="create-header">
+    <h1 class="create-title">Создание задачи</h1>
+    <a href="{% url 'tasks' %}" class="back-link">← Назад к списку</a>
+  </div>
+
+  <!-- Форма -->
+  <form method="post" action="{% url 'create_tasks' %}" class="task-form">
+    {% csrf_token %}
+
+    <div class="form-group">
+      <label for="{{ form.title.id_for_label }}" class="form-label">Название задачи</label>
+      {{ form.title }} {% if form.title.errors %}
+      <div class="error-message">{{ form.title.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.date.id_for_label }}" class="form-label">Дата выполнения</label>
+      {{ form.date }} {% if form.date.errors %}
+      <div class="error-message">{{ form.date.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="submit-btn">Создать задачу</button>
+  </form>
+</div>
+{% endblock %}

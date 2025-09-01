@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="task-detail-container">
+    <h3 class="centered-title">{{ task.title }}</h3>
+    
+    <div class="subtasks-list">
+        <h4 class="centered-title">Подзадачи:</h4>
+        {% for sub_task in task.subtasks.all %}
+            <div class="subtask-item">
+                <input type="checkbox" {% if sub_task.completed %}checked{% endif %}>
+                <span>{{ sub_task.text }}</span>
+                <small>({{ sub_task.created_at|date:"d.m.Y H:i" }})</small>
+            </div>
+        {% empty %}
+            <p class="centered-text">Пока нет подзадач</p>
+        {% endfor %}
+    </div>
+
+    <!-- Кнопка добавления -->
+    <div class="add-button-container">
+        <button type="button" class="btn-primary" onclick="openModal()">
+            + Добавить подзадачу
+        </button>
+    </div>
+
+    <!-- Модальное окно -->
+    <div id="addSubtaskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="centered-title">Добавить новую подзадачу</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            
+            <form method="POST" action="{% url 'add_subtask' task.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ subtask_form.text }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Отмена</button>
+                    <button type="submit" class="btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+
+</style>
+
+<script>
+function openModal() {
+    document.getElementById('addSubtaskModal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('addSubtaskModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('addSubtaskModal');
+    if (event.target === modal) {
+        closeModal();
+    }
+}
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeModal();
+    }
+});
+</script>
+{% endblock %}

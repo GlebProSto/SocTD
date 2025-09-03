@@ -33,8 +33,12 @@
 
     <!-- Статистика -->
     <div class="profile-stats">
-      <span class="stat-item"> <strong>{{ user.profile.get_following_count }}</strong> подписок </span>
-      <span class="stat-item"> <strong>{{ user.profile.get_followers_count }}</strong> подписчиков </span>
+      <a href="{% url "friendship_list" %}"
+        ><span class="stat-item"> <strong>{{ user.profile.get_following_count }}</strong> подписок </span></a
+      >
+      <a href="/friendship/?section=subscribed"
+        ><span class="stat-item"> <strong>{{ user.profile.get_followers_count }}</strong> подписчиков </span></a
+      >
     </div>
 
     {% if user.profile.bio %}

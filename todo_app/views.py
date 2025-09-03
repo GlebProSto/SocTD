@@ -145,14 +145,10 @@ def task_detail(request, task_id):
 @login_required
 def subtask_toggle(request, subtask_id):
     subtask = get_object_or_404(SubTask, id=subtask_id)
-    
-    # Получаем TaskList, к которому привязана подзадача (через M2M связь)
-    # Берем первый попавшийся, обычно подзадача принадлежит только одному списку
     tasklist = subtask.tasklist_set.first()
     
-    # Проверяем права доступа
     if not tasklist or tasklist.user != request.user:
-        return redirect('tasks')  # или на страницу задачи, если есть task_id
+        return redirect('tasks')
     
     if request.method == 'POST':
         subtask.completed = not subtask.completed
@@ -311,5 +307,25 @@ def notifications(request):
         'notifications': user_notifications
     })
 
-
-
+@login_required
+def friendship_list(request): 
+    section = request.GET.get('section', 'subscribers')
+    subscribers = None
+    subscribed = None
+    
+    if section == 'subscribers':
+        subscribers = Friendship.objects.filter(
+            to_user=request.user,
+            accepted=True
+        ).select_related('from_user').order_by('from_user__username')
+    
+    elif section == 'subscribed':
+        subscribed = Friendship.objects.filter(
+            from_user=request.user
+        ).order_by('to_user__username')
+    
+    return render(request, 'friendship.html', {
+        'subscribers': subscribers,
+        'subscribed': subscribed,
+        'section': section  
+    })

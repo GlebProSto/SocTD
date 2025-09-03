@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="{% static 'css/home.css' %}" />
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}" />
     <link rel="stylesheet" href="{% static 'css/tasks.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/friendship.css' %}" />
   </head>
   <body>
     <div class="container">
@@ -20,6 +21,7 @@
           <a href="{% url "notifications" %}" class="nav-item">🔔 Уведомления</a>
           <div class="nav-item">✉️ Сообщения</div>
           <a href="{% url 'tasks' %}" class="nav-item">📋 Мои задачи</a>
+          <a href="{% url 'friendship_list' %}" class="nav-item">👤 Друзья</a>
           <a href="{% url 'profile' %}" class="nav-item">👤 Профиль</a>
         </nav>
       </div>

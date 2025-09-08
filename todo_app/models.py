@@ -96,6 +96,27 @@ class TaskList(models.Model):
             return 0
         completed = self.subtasks.filter(completed=True).count()
         return (completed / total) * 100
+    
+class Chat(models.Model):
+    participants = models.ManyToManyField(User, related_name='chats')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def get_other_user(self, current_user):
+        return self.participants.exclude(id=current_user.id).first()
+#     <!-- В списке чатов показываем собеседника -->
+# {% for chat in user.chats.all %}
+#     Чат с: {{ chat.get_other_user.request.user.username }}
+#
+
+class Message(models.Model):
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.TextField(max_length=500)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+
+
 
 
 

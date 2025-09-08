@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import TodoPost, Comment, Profile, Repost,SubTask,TaskList
+from .models import TodoPost, Comment, Profile, Repost,SubTask,TaskList,Message
 
 class CustomUserCreationForm(UserCreationForm):
     username = forms.CharField(
@@ -73,5 +73,13 @@ class SubTaskForm(forms.ModelForm):
         fields = ['text'] 
         widgets = {
             'text': forms.TextInput(attrs={'placeholder': 'Введите текст подзадачи...'})
+        }
+    
+class MessageForm(forms.Model):
+    class Meta:
+        model = Message
+        fields = ['text'] 
+        widgets = {
+            'text': forms.TextInput(attrs={'placeholder': 'Введите текст сообщения'})
         }
         

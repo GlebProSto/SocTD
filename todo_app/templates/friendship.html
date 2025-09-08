@@ -1,88 +1,75 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block content %}
+{% extends 'base.html' %} {% load static %} {% block content %}
 <div class="friendship-container">
-    <!-- Заголовок и вкладки -->
-    <div class="friendship-header">
-        <h1 class="friendship-title">Друзья</h1>
-        <div class="friendship-tabs">
-            <a href="?section=subscribers" class="friendship-tab {% if section == 'subscribers' %}active{% endif %}">
-                Подписчики
-            </a>
-            <a href="?section=subscribed" class="friendship-tab {% if section == 'subscribed' %}active{% endif %}">
-                Подписки
-            </a>
+  <!-- Заголовок и вкладки -->
+  <div class="friendship-header">
+    <h1 class="friendship-title">Друзья</h1>
+    <div class="friendship-tabs">
+      <a href="?section=subscribers" class="friendship-tab {% if section == 'subscribers' %}active{% endif %}">
+        Подписчики
+      </a>
+      <a href="?section=subscribed" class="friendship-tab {% if section == 'subscribed' %}active{% endif %}">
+        Подписки
+      </a>
+    </div>
+  </div>
+
+  <!-- Список пользователей -->
+  <div class="friendship-content">
+    {% if section == 'subscribers' %} {% if subscribers %}
+    <div class="users-list">
+      {% for friendship in subscribers %} {% with user=friendship.from_user %}
+      <div class="user-item">
+        <div class="user-avatar">
+          {% if user.profile.avatar %}
+          <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" />
+          {% else %}
+          <div class="avatar-placeholder">{{ user.username|first|upper }}</div>
+          {% endif %}
         </div>
+        <div class="user-info">
+          <h4 class="user-name">{{ user.get_full_name|default:user.username }}</h4>
+          <p class="user-username">@{{ user.username }}</p>
+        </div>
+        <div class="user-actions">
+          <a href="{% url "chat" user.username %}" class="btn">Написать</a>
+        </div>
+      </div>
+      {% endwith %} {% endfor %}
     </div>
-
-    <!-- Список пользователей -->
-    <div class="friendship-content">
-        {% if section == 'subscribers' %} 
-            {% if subscribers %}
-                <div class="users-list">
-                    {% for friendship in subscribers %}
-                        {% with user=friendship.from_user %}
-                        <div class="user-item">
-                            <div class="user-avatar">
-                                {% if user.profile.avatar %}
-                                    <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}">
-                                {% else %}
-                                    <div class="avatar-placeholder">{{ user.username|first|upper }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="user-info">
-                                <h4 class="user-name">{{ user.get_full_name|default:user.username }}</h4>
-                                <p class="user-username">@{{ user.username }}</p>
-                            </div>
-                            <div class="user-actions">
-                                <button class="btn">Написать</button>
-                            </div>
-                        </div>
-                        {% endwith %}
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">👥</div>
-                    <h3>Пока нет подписчиков</h3>
-                    <p>Когда на вас подпишутся, они появятся здесь.</p>
-                </div>
-            {% endif %}
-        
-        {% elif section == 'subscribed' %} 
-            {% if subscribed %}
-                <div class="users-list">
-                    {% for friendship in subscribed %}
-                        {% with user=friendship.to_user %}
-                        <div class="user-item">
-                            <div class="user-avatar">
-                                {% if user.profile.avatar %}
-                                    <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}">
-                                {% else %}
-                                    <div class="avatar-placeholder">{{ user.username|first|upper }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="user-info">
-                                <h4 class="user-name">{{ user.get_full_name|default:user.username }}</h4>
-                                <p class="user-username">@{{ user.username }}</p>
-                            </div>
-                            <div class="user-actions">
-                                <button class="btn">Написать</button>
-                            </div>
-                        </div>
-                        {% endwith %}
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">🔍</div>
-                    <h3>Вы ни на кого не подписаны</h3>
-                    <p>Найдите друзей и начните общаться!</p>
-                </div>
-            {% endif %}
-        {% endif %}
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">👥</div>
+      <h3>Пока нет подписчиков</h3>
+      <p>Когда на вас подпишутся, они появятся здесь.</p>
     </div>
+    {% endif %} {% elif section == 'subscribed' %} {% if subscribed %}
+    <div class="users-list">
+      {% for friendship in subscribed %} {% with user=friendship.to_user %}
+      <div class="user-item">
+        <div class="user-avatar">
+          {% if user.profile.avatar %}
+          <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" />
+          {% else %}
+          <div class="avatar-placeholder">{{ user.username|first|upper }}</div>
+          {% endif %}
+        </div>
+        <div class="user-info">
+          <h4 class="user-name">{{ user.get_full_name|default:user.username }}</h4>
+          <p class="user-username">@{{ user.username }}</p>
+        </div>
+        <div class="user-actions">
+          <a href="{% url "chat" user.username %}" class="btn">Написать</a>
+        </div>
+      </div>
+      {% endwith %} {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <h3>Вы ни на кого не подписаны</h3>
+      <p>Найдите друзей и начните общаться!</p>
+    </div>
+    {% endif %} {% endif %}
+  </div>
 </div>
-
 {% endblock %}

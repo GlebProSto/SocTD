@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib import messages
-from .models import TodoPost, Comment, Profile, Repost, Friendship,Notification,SubTask,TaskList
+from .models import TodoPost, Comment, Profile, Repost, Friendship,Notification,SubTask,TaskList,Chat,Message
 from .forms import CustomUserCreationForm, TodoPostForm, CommentForm, ProfileForm, RepostForm,SubTaskForm,TaskListForm
 from django.db.models import Q
 
@@ -329,3 +329,16 @@ def friendship_list(request):
         'subscribed': subscribed,
         'section': section  
     })
+@login_required
+def chat(request,username):
+    interlocutor = User.objects.get(username = username)
+    if interlocutor == request.user:
+        return redirect('profile')
+    chat = Chat.objects.filter(participants = interlocutor).filter(participants = request.user).first()
+    if not chat:
+        chat = Chat.objects.create()   
+        chat.participants.add(request.user)
+        chat.participants.add(interlocutor)
+    messages = chat.messages.all().order_by('timestamp')
+    return render(request,'chat.html',{'chat':chat,'messages': messages})
+

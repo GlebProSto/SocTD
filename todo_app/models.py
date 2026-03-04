@@ -17,7 +17,15 @@ class Profile(models.Model):
     
     def get_following_count(self):
         return self.user.friendship_requests_sent.filter(accepted=True).count()
+    # stats on user's posts
+    def get_posts_likes(self):
+        return TodoPost.objects.filter(author=self.user).aggregate(models.Count('likes'))['likes__count']
 
+    def get_posts_reposts(self):
+        return Repost.objects.filter(post__author=self.user).count()
+
+    def get_posts_comments(self):
+        return Comment.objects.filter(post__author=self.user).count()
 class Friendship(models.Model):
     from_user = models.ForeignKey(User, related_name='friendship_requests_sent', on_delete=models.CASCADE)
     to_user = models.ForeignKey(User, related_name='friendship_requests_received', on_delete=models.CASCADE)
@@ -103,10 +111,13 @@ class Chat(models.Model):
     
     def get_other_user(self, current_user):
         return self.participants.exclude(id=current_user.id).first()
-#     <!-- В списке чатов показываем собеседника -->
-# {% for chat in user.chats.all %}
-#     Чат с: {{ chat.get_other_user.request.user.username }}
-#
+
+    def unread_count_for(self, user):
+        """Return number of unread messages in this chat for the given user."""
+        return self.messages.filter(is_read=False).exclude(sender=user).count()
+
+    def last_message(self):
+        return self.messages.order_by('-timestamp').first()
 
 class Message(models.Model):
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE, related_name='messages')
@@ -114,6 +125,28 @@ class Message(models.Model):
     text = models.TextField(max_length=500)
     timestamp = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Message<{self.sender.username}: {self.text[:20]}>"
+
+
+# Automatically create a Profile when a new User is created
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+@receiver(post_save, sender=User)
+def create_or_update_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+    else:
+        # Ensure profile exists for existing users (defensive)
+        try:
+            instance.profile.save()
+        except Profile.DoesNotExist:
+            Profile.objects.create(user=instance)
 
 
 

@@ -1,29 +1,40 @@
 .profile-container {
-  max-width: 800px; 
+  max-width: 1000px;
   margin: 0 auto;
   border-left: 1px solid var(--border-color);
   border-right: 1px solid var(--border-color);
   min-height: 100vh;
+  background: var(--bg-page);
 }
 
 .profile-cover {
-  height: 200px;
+  height: 220px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   position: relative;
 }
 
 .profile-avatar {
   position: absolute;
-  bottom: -50px;
-  left: 40px; /* ← Увеличил отступ слева */
-  width: 120px;
-  height: 120px;
-  border: 4px solid var(--bg-color);
+  bottom: -60px;
+  left: 56px;
+  width: 128px;
+  height: 128px;
+  border: 6px solid var(--bg-color);
   border-radius: 50%;
   background: var(--bg-color);
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
 }
 
 .profile-stats a {
+  .profile-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    min-height: 100vh;
+    background: var(--bg-page);
+  }
   text-decoration: none;
   color: inherit;
 }
@@ -62,8 +73,74 @@
 }
 
 .profile-info {
-  padding: 60px 40px 20px;
+  padding: 72px 48px 28px;
   background: var(--bg-color);
+}
+
+/* styling for profile edit form */
+.edit-profile-form {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+  .edit-btn {
+    padding: 8px 18px;
+    border-radius: 28px;
+    border: 2px solid #f55b5b;
+    background: transparent;
+    color: #f55b5b;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    text-decoration: none;
+  }
+  .edit-btn:hover { background: rgba(245, 91, 91, 0.06); }
+}
+
+.user-link {
+  display: flex;
+  text-decoration: none;
+  color: inherit;
+}
+
+.user-link:hover .user-name {
+  color: var(--main-color);
+}
+
+#edit-modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:999; display:none; }
+
+#edit-profile-form {
+  position:fixed; z-index:1000; left:50%; top:52%; transform:translate(-50%, -52%);
+  width:calc(100% - 48px); max-width:520px; background:var(--bg-color);
+  border-radius:12px; box-shadow:0 20px 60px rgba(4,12,24,0.12); padding:22px;
+  display:none; box-sizing:border-box;
+}
+
+#edit-profile-form h2 { margin:0 0 10px; font-size:20px; color:var(--main-color); }
+
+#edit-profile-form input[type="text"],
+#edit-profile-form textarea,
+#edit-profile-form input[type="file"] {
+  width:100%; padding:8px; border:1px solid var(--border-color); border-radius:6px; box-sizing:border-box; margin-top:6px;
+}
+
+#edit-profile-form label { display:block; font-weight:600; margin-top:10px; }
+.edit-profile-form label {
+  display: block;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.edit-profile-form input[type="text"],
+.edit-profile-form textarea,
+.edit-profile-form input[type="file"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-sizing: border-box;
+  margin-top: 5px;
 }
 
 .profile-actions {
@@ -81,12 +158,66 @@
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s;
+  text-decoration: none; /* remove underline for links */
 }
 
 .edit-btn:hover {
   background-color: rgba(245, 85, 85, 0.1);
   border-color: var(--main-color);
 }
+  /* Адаптивность */
+  @media (max-width: 768px) {
+    .profile-container { border-left: none; border-right: none; max-width: 100%; }
+    .profile-cover { height: 150px; }
+    .profile-avatar { width: 100px; height: 100px; bottom: -40px; left: 20px; }
+    .profile-info { padding: 50px 20px 20px; }
+    .profile-nav { overflow-x: auto; }
+    .profile-nav-item { min-width: 100px; font-size: 14px; padding: 12px 0; }
+    .profile-post { padding: 15px 20px; }
+    .empty-state { padding: 60px 20px; }
+  }
+
+  /* Profile edit modal and button visual polish */
+  #edit-modal-backdrop { display:none; }
+
+  #edit-profile-form {
+    position: fixed;
+    z-index: 1000;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(720px, calc(100% - 40px));
+    background: var(--bg-color);
+    border-radius: 14px;
+    box-shadow: 0 30px 60px rgba(6,20,40,0.18);
+    padding: 24px;
+    display: none;
+    box-sizing: border-box;
+  }
+
+  #edit-profile-form .modal-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 12px; }
+
+  #edit-profile-form h2 { margin:0; font-size:22px; color:var(--text-color); }
+
+  .edit-profile-toggle { display:inline-block; padding:8px 18px; border-radius:24px; border:2px solid #f55b5b; color:#f55b5b; background:transparent; font-weight:700; text-decoration:none; }
+  .edit-profile-toggle:hover { background: rgba(245, 91, 91, 0.06); }
+
+  .file-input .file-label { background:#f55b5b; color:white; padding:8px 12px; border-radius:999px; }
+
+  #edit-profile-form textarea { min-height:100px; resize:vertical; padding:12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-page); }
+
+  .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:16px; }
+  .btn--primary { background:#f55b5b; color:white; padding:10px 14px; border-radius:10px; border:none; font-weight:700; }
+  .btn--ghost { background:transparent; border:1px solid var(--border-color); padding:8px 12px; border-radius:10px; }
+
+  /* ensure inputs and labels are nicely spaced */
+  #edit-profile-form label { font-weight:600; color:var(--secondary-text); margin-top:10px; display:block; }
+  #edit-profile-form input[type="file"] { display:none; }
+
+  @media (max-width:520px) {
+    #edit-profile-form { padding:16px; width: calc(100% - 28px); }
+    .edit-profile-toggle { padding:8px 12px; }
+  }
 
 .profile-name {
   font-size: 24px;
@@ -145,8 +276,8 @@
 }
 
 .profile-post:hover {
-  background-color: #f8f9fa;
-}
+  padding: 18px;
+  margin: 18px 24px;
 
 .post-content {
   font-size: 16px;
@@ -179,6 +310,20 @@
 .empty-state p {
   font-size: 14px;
 }
+
+/* Additional modal/form utility styles */
+.form-row { display:flex; gap:12px; align-items:center; margin-top:10px; }
+.form-row .thumb { width:64px; height:64px; border-radius:50%; overflow:hidden; border:1px solid var(--border-color); }
+.form-row .thumb img { width:100%; height:100%; object-fit:cover; }
+.form-field { flex:1; }
+.form-field textarea { min-height:70px; resize:vertical; }
+.file-input { display:flex; gap:10px; align-items:center; }
+.file-input .file-label { background:var(--main-color); color:white; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600; }
+.file-input input[type=file] { display:none; }
+.current-pic { font-size:13px; color:var(--secondary-text); }
+.modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:16px; }
+.btn--primary { background:var(--main-color); color:white; padding:10px 14px; border-radius:8px; border:none; font-weight:700; }
+.btn--ghost { background:transparent; border:1px solid var(--border-color); padding:8px 12px; border-radius:8px; }
 
 /* Адаптивность */
 @media (max-width: 768px) {
@@ -221,3 +366,4 @@
     padding: 60px 20px; /* ← Меньшие отступы на мобильных */
   }
 }
+\n/* �������������� ������� */\n.edit-profile-form {\n  background: var(--bg-color);\n  padding: 20px 40px;\n  border: 1px solid var(--border-color);\n  border-radius: 10px;\n  margin: 20px 40px;\n}\n.edit-profile-form h2 {\n  margin-bottom: 15px;\n  color: var(--main-color);\n}\n.edit-profile-form .btn {\n  margin-top: 10px;\n}\n

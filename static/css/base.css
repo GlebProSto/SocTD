@@ -75,8 +75,6 @@ body {
   border-right: 1px solid var(--border-color);
 }
 
-
-
 .post-input {
   width: 100%;
   border: none;
@@ -117,7 +115,6 @@ body {
   margin-bottom: 10px;
 }
 
-
 .auth-buttons {
   position: fixed;
   top: 20px;
@@ -156,7 +153,6 @@ body {
 .btn-outline:hover {
   background-color: var(--hover-color);
 }
-
 
 /* Стили для форм */
 .auth-form {
@@ -197,6 +193,60 @@ body {
 .form-group input:focus {
   outline: none;
   border-color: var(--main-color);
+}
+
+/* quick post form in sidebar */
+.sidebar-post-form {
+  margin-bottom: 20px;
+  background: var(--bg-color);
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+.sidebar-post-form textarea {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px;
+  resize: vertical;
+  font-family: inherit;
+}
+.post-button-small {
+  margin-top: 5px;
+  background-color: var(--main-color);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.post-button-small:hover {
+  background-color: #0c85d0;
+}
+
+/* search page */
+.search-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.search-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+/* try to mimic X style colors */
+:root {
+  --main-color: #1da1f2;
+  --bg-color: #ffffff;
+  --text-color: #14171a;
+  --border-color: #e1e8ed;
+  --hover-color: rgba(29, 161, 242, 0.1);
+  --secondary-text: #657786;
 }
 
 .error-message {
@@ -247,7 +297,6 @@ body {
   }
 }
 
-
 .post-input:disabled {
   background-color: white !important;
   color: #333 !important;
@@ -263,10 +312,6 @@ body {
   gap: 8px;
 }
 
-
-
-
-
 /* Стили для аватара в посте */
 .post-author-link {
   display: flex;
@@ -281,27 +326,69 @@ body {
   transform: translateY(-2px);
 }
 
-
-
-
-
-
-
-
-
 .post-username {
   font-weight: 600;
   transition: color 0.3s ease;
 }
 
 .post-author-link:hover .post-username {
-  color: #007bff;
+  color: var(--main-color);
 }
 
 /* Убираем подчеркивание у ссылки */
 .post-author-link {
   text-decoration: none !important;
   border-bottom: none !important;
+}
+
+/* search users page */
+
+/* profile messaging inline form */
+.profile-message-form textarea {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 6px;
+  font-family: inherit;
+}
+.profile-message-form .btn-primary {
+  padding: 6px 14px;
+  font-size: 0.9rem;
+}
+.search-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.search-form {
+  display: flex;
+  gap: 8px;
+}
+.search-form .btn {
+  background-color: var(--main-color);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+.user-results {
+  list-style: none;
+  padding: 0;
+}
+.user-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.user-item .note {
+  font-size: 0.9rem;
+  color: var(--secondary-text);
+}
+.inline-form {
+  display: inline;
 }
 
 /* Эффект для всей карточки поста при наведении на аватар */

@@ -1,0 +1,36 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+<div class="search-container">
+  <h1>Поиск пользователей</h1>
+  <form method="get" action="" class="search-form">
+    {{ form.q }}
+    <button type="submit" class="btn">Найти</button>
+  </form>
+
+  {% if results %}
+  <ul class="user-results">
+    {% for item in results %}
+    <li class="user-item">
+      <a href="{% url 'user_profile' item.user.username %}">{{ item.user.username }}</a>
+      {% if item.status == 'none' %}
+      <form action="{% url 'add_friend' item.user.username %}" method="post" class="inline-form">
+        {% csrf_token %}
+        <button class="btn small" type="submit">Добавить в друзья</button>
+      </form>
+      {% elif item.status == 'requested' %}
+      <span class="note">Заявка отправлена</span>
+      {% elif item.status == 'pending' %}
+      <span class="note">У вас есть заявка от этого пользователя</span>
+      {% elif item.status == 'friends' %}
+      <form action="{% url 'add_friend' item.user.username %}" method="post" class="inline-form">
+        {% csrf_token %}
+        <button class="btn small" type="submit">Удалить из друзей</button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>Ничего не найдено по запросу "{{ query }}".</p>
+  {% endif %}
+</div>
+{% endblock %}

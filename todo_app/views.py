@@ -6,7 +6,8 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib import messages
 from .models import TodoPost, Comment, Profile, Repost, Friendship,Notification,SubTask,TaskList,Chat,Message
-from .forms import CustomUserCreationForm, TodoPostForm, CommentForm, ProfileForm, RepostForm,SubTaskForm,TaskListForm
+from .forms import CustomUserCreationForm, TodoPostForm, CommentForm, ProfileForm, RepostForm, SubTaskForm, TaskListForm, UserSearchForm
+from django.utils import timezone
 from django.db.models import Q
 
 def home(request):
@@ -21,8 +22,8 @@ def home(request):
         return render(request, 'home.html',{
             'posts' : posts
         }) 
+
  
-    
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -101,13 +102,22 @@ def user_profile(request, username):
 
 @login_required
 def create_post(request):
+    """Handle new post creation from any page.  We only validate content
+    because the form no longer includes author etc.
+    """
     if request.method == 'POST':
         form = TodoPostForm(request.POST)
         if form.is_valid():
             post = form.save(commit=False)
             post.author = request.user
             post.save()
-            return redirect('home')
+            messages.success(request, "Пост опубликован")
+        else:
+            messages.error(request, "Не удалось опубликовать пост. Проверьте текст.")
+        next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+        if next_url:
+            return redirect(next_url)
+        return redirect('home')
     return redirect('home')
 
     
@@ -119,10 +129,12 @@ def create_tasks(request):
             tasklist = form.save(commit=False)
             tasklist.user = request.user    
             tasklist.save()
+            messages.success(request, 'Задача создана')
             return redirect('tasks')
+        else:
+            messages.error(request, 'Исправьте ошибки в форме создания задачи')
     else:
-        form = TaskListForm()
-    
+        form = TaskListForm(initial={'date': timezone.now().date()})
     return render(request, 'task_create.html', {'form': form})
 
 @login_required
@@ -221,6 +233,39 @@ def repost_post(request, post_id):
 
 
 @login_required
+def search_users(request):
+    """Simple search page that lists users and allows sending/removing
+    friendship requests."""
+    query = request.GET.get('q', '').strip()
+    users_qs = User.objects.exclude(id=request.user.id)
+    if query:
+        users_qs = users_qs.filter(
+            Q(username__icontains=query) |
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query)
+        )
+    users_qs = users_qs.order_by('username')
+
+    results = []
+    for u in users_qs:
+        existing = Friendship.objects.filter(
+            (Q(from_user=request.user, to_user=u) |
+             Q(from_user=u, to_user=request.user))
+        ).first()
+        status = 'none'
+        if existing:
+            if existing.accepted:
+                status = 'friends'
+            elif existing.from_user == request.user:
+                status = 'requested'
+            else:
+                status = 'pending'
+        results.append({'user': u, 'status': status})
+
+    form = UserSearchForm(request.GET)
+    return render(request, 'search_users.html', {'results': results, 'form': form, 'query': query})
+
+@login_required
 def add_friend(request, username):
     to_user = get_object_or_404(User, username=username)
     
@@ -263,13 +308,21 @@ def accept_friend(request, notification_id):
     notification = get_object_or_404(Notification, id=notification_id, user=request.user)
     
     if notification.notification_type == 'friend_request':
-        friendship = Friendship.objects.get(
-            from_user=notification.from_user,
-            to_user=request.user
-        )
-        friendship.accepted = True
-        friendship.save()
-        
+        # ensure the friendship record exists and is marked accepted
+        try:
+            friendship = Friendship.objects.get(
+                from_user=notification.from_user,
+                to_user=request.user
+            )
+            friendship.accepted = True
+            friendship.save()
+        except Friendship.DoesNotExist:
+            # something went wrong earlier; create it to maintain consistency
+            friendship = Friendship.objects.create(
+                from_user=notification.from_user,
+                to_user=request.user,
+                accepted=True
+            )
         
         reverse_friendship, created = Friendship.objects.get_or_create(
             from_user=request.user,
@@ -287,8 +340,8 @@ def accept_friend(request, notification_id):
             notification_type='friend_accept'
         )
         
-        notification.is_read = True
-        notification.save()
+        # remove the original request so it no longer shows up
+        notification.delete()
         
         messages.success(request, f"Вы приняли заявку в друзья от {notification.from_user.username}")
     
@@ -330,15 +383,95 @@ def friendship_list(request):
         'section': section  
     })
 @login_required
-def chat(request,username):
-    interlocutor = User.objects.get(username = username)
+def chat(request, username):
+    interlocutor = get_object_or_404(User, username=username)
     if interlocutor == request.user:
         return redirect('profile')
-    chat = Chat.objects.filter(participants = interlocutor).filter(participants = request.user).first()
+
+    chat = Chat.objects.filter(participants=interlocutor).filter(participants=request.user).first()
     if not chat:
-        chat = Chat.objects.create()   
+        chat = Chat.objects.create()
         chat.participants.add(request.user)
         chat.participants.add(interlocutor)
-    messages = chat.messages.all().order_by('timestamp')
-    return render(request,'chat.html',{'chat':chat,'messages': messages})
+
+    if request.method == 'POST':
+        text = request.POST.get('text', '').strip()
+        if text:
+            Message.objects.create(chat=chat, sender=request.user, text=text)
+            return redirect('chat', username=username)
+
+    messages_list = chat.messages.all().order_by('timestamp')
+
+    # Mark messages addressed to the current user as read when opening the chat
+    unread_to_user = messages_list.filter(is_read=False).exclude(sender=request.user)
+    if unread_to_user.exists():
+        unread_to_user.update(is_read=True)
+
+    # `chat` object is not needed in template; avoid accidentally rendering it
+    return render(request, 'chat.html', {'chat_messages': messages_list, 'interlocutor': interlocutor})
+
+
+@login_required
+def api_send_message(request):
+    """AJAX endpoint: POST {username, text} -> creates or reuses chat and message"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    data = json.loads(request.body.decode('utf-8')) if request.body else request.POST
+    username = data.get('username')
+    text = data.get('text', '').strip()
+    if not username or not text:
+        return JsonResponse({'error': 'username and text required'}, status=400)
+    to_user = get_object_or_404(User, username=username)
+    if to_user == request.user:
+        return JsonResponse({'error': 'cannot send to yourself'}, status=400)
+    chat = Chat.objects.filter(participants=to_user).filter(participants=request.user).first()
+    if not chat:
+        chat = Chat.objects.create()
+        chat.participants.add(request.user)
+        chat.participants.add(to_user)
+    message = Message.objects.create(chat=chat, sender=request.user, text=text)
+    return JsonResponse({'id': message.id, 'text': message.text, 'sender': message.sender.username, 'timestamp': message.timestamp.isoformat()})
+
+
+@login_required
+def api_fetch_messages(request):
+    """AJAX endpoint: GET ?username=...&after_id=... -> returns list of messages for chat newer than after_id"""
+    username = request.GET.get('username')
+    after_id = request.GET.get('after_id')
+    if not username:
+        return JsonResponse({'error': 'username required'}, status=400)
+    other = get_object_or_404(User, username=username)
+    chat = Chat.objects.filter(participants=other).filter(participants=request.user).first()
+    if not chat:
+        return JsonResponse({'messages': []})
+    qs = chat.messages.order_by('timestamp')
+    if after_id:
+        try:
+            after_id = int(after_id)
+            qs = qs.filter(id__gt=after_id)
+        except ValueError:
+            pass
+    messages = []
+    last_id = None
+    for m in qs:
+        messages.append({'id': m.id, 'text': m.text, 'sender': m.sender.username, 'timestamp': m.timestamp.isoformat()})
+        last_id = m.id
+    # mark fetched messages as read if they were sent to the current user
+    qs.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
+    return JsonResponse({'messages': messages, 'last_id': last_id})
+
+
+@login_required
+def messages_list(request):
+    # List all chats for the current user, ordered by last message time
+    chats = Chat.objects.filter(participants=request.user).distinct()
+    chats = sorted(chats, key=lambda c: c.messages.order_by('-timestamp').first().timestamp if c.messages.exists() else c.created_at, reverse=True)
+    chat_items = []
+    for c in chats:
+        other = c.participants.exclude(id=request.user.id).first()
+        last = c.messages.order_by('-timestamp').first()
+        unread = c.unread_count_for(request.user)
+        chat_items.append({'chat': c, 'other': other, 'last': last, 'unread': unread})
+
+    return render(request, 'messages.html', {'chat_items': chat_items})
 

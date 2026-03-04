@@ -1,0 +1,125 @@
+.chat-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.chat-header a {
+  color: var(--main-color);
+  text-decoration: none;
+}
+.chat-header a.back-link {
+  text-decoration: none;
+  font-weight: 500;
+}
+.messages-list {
+  border: 1px solid #e1e1e1;
+  padding: 10px;
+  height: 400px;
+  overflow: auto;
+  background: #fff;
+}
+.message {
+  margin-bottom: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  max-width: 80%;
+}
+.message.sent {
+  background: #dcf8c6;
+  margin-left: auto;
+  text-align: right;
+}
+.message.received {
+  background: #f1f0f0;
+  margin-right: auto;
+  text-align: left;
+}
+.message-sender {
+  font-weight: 600;
+  font-size: 0.9em;
+}
+.message-text {
+  margin-top: 4px;
+}
+.message-time {
+  font-size: 0.8em;
+  color: #666;
+  margin-top: 6px;
+}
+.message-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.message-form textarea {
+  flex: 1;
+  padding: 8px;
+  resize: vertical;
+}
+.message-form button {
+  flex: 0 0 auto;
+}
+.chat-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.chat-item {
+  border-bottom: 1px solid #eee;
+  padding: 8px 0;
+}
+.chat-item a {
+  display: flex;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+.chat-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #3b82f6;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+.chat-meta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.chat-username {
+  font-weight: 700;
+}
+.chat-username .badge {
+  background: #ef4444;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  margin-left: 6px;
+}
+.chat-last {
+  color: #666;
+  font-size: 0.9em;
+}
+.no-messages {
+  color: #666;
+}
+
+/* small nav badges */
+.badge {
+  background: #ef4444;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  margin-left: 6px;
+}

@@ -1,0 +1,26 @@
+{% extends 'base.html' %} {% load static %} {% block content %}
+<div class="messages-container">
+  <h1>Сообщения</h1>
+  {% if chat_items %}
+  <ul class="chat-list">
+    {% for item in chat_items %}
+    <li class="chat-item">
+      <a href="{% url 'chat' item.other.username %}">
+        <div class="chat-avatar">{{ item.other.username|first|upper }}</div>
+        <div class="chat-meta">
+          <div class="chat-username">
+            {{ item.other.username }} {% if item.unread %}<span class="badge">{{ item.unread }}</span>{% endif %}
+          </div>
+          <div class="chat-last">
+            {% if item.last %}{{ item.last.text|truncatechars:40 }}{% else %}<em>Нет сообщений</em>{% endif %}
+          </div>
+        </div>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>У вас пока нет чатов. Начните диалог в профиле пользователя.</p>
+  {% endif %}
+</div>
+{% endblock %}

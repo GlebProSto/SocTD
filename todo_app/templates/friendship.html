@@ -19,19 +19,21 @@
     <div class="users-list">
       {% for friendship in subscribers %} {% with user=friendship.from_user %}
       <div class="user-item">
-        <div class="user-avatar">
-          {% if user.profile.avatar %}
-          <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" />
-          {% else %}
-          <div class="avatar-placeholder">{{ user.username|first|upper }}</div>
-          {% endif %}
-        </div>
-        <div class="user-info">
-          <h4 class="user-name">{{ user.get_full_name|default:user.username }}</h4>
-          <p class="user-username">@{{ user.username }}</p>
-        </div>
+        <a href="{% url 'user_profile' user.username %}" class="user-link">
+          <div class="user-avatar">
+            {% if user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" />
+            {% else %}
+            <div class="avatar-placeholder">{{ user.username|first|upper }}</div>
+            {% endif %}
+          </div>
+          <div class="user-info">
+            <h4 class="user-name">{{ user.get_full_name|default:user.username }}</h4>
+            <p class="user-username">@{{ user.username }}</p>
+          </div>
+        </a>
         <div class="user-actions">
-          <a href="{% url "chat" user.username %}" class="btn">Написать</a>
+          <a href="{% url 'chat' user.username %}" class="btn">Написать</a>
         </div>
       </div>
       {% endwith %} {% endfor %}
@@ -46,19 +48,21 @@
     <div class="users-list">
       {% for friendship in subscribed %} {% with user=friendship.to_user %}
       <div class="user-item">
-        <div class="user-avatar">
-          {% if user.profile.avatar %}
-          <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" />
-          {% else %}
-          <div class="avatar-placeholder">{{ user.username|first|upper }}</div>
-          {% endif %}
-        </div>
-        <div class="user-info">
-          <h4 class="user-name">{{ user.get_full_name|default:user.username }}</h4>
-          <p class="user-username">@{{ user.username }}</p>
-        </div>
+        <a href="{% url 'user_profile' user.username %}" class="user-link">
+          <div class="user-avatar">
+            {% if user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" />
+            {% else %}
+            <div class="avatar-placeholder">{{ user.username|first|upper }}</div>
+            {% endif %}
+          </div>
+          <div class="user-info">
+            <h4 class="user-name">{{ user.get_full_name|default:user.username }}</h4>
+            <p class="user-username">@{{ user.username }}</p>
+          </div>
+        </a>
         <div class="user-actions">
-          <a href="{% url "chat" user.username %}" class="btn">Написать</a>
+          <a href="{% url 'chat' user.username %}" class="btn">Написать</a>
         </div>
       </div>
       {% endwith %} {% endfor %}

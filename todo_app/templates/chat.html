@@ -1,5 +1,87 @@
 {% extends 'base.html' %} {% load static %} {% block content %}
+<div class="chat-container">
+  <div class="chat-header">
+    <h2>Чат с {{ interlocutor.username }}</h2>
+    <a href="{% url 'messages' %}" class="back-link">← Назад к сообщениям</a>
+  </div>
 
-<div>{{ chat.participants.username }}</div>
+  <div class="messages-list">
+    {% for m in chat_messages %}
+    <div class="message {% if m.sender == user %}sent{% else %}received{% endif %}">
+      <div class="message-sender">{{ m.sender.username }}</div>
+      <div class="message-text">{{ m.text }}</div>
+      <div class="message-time">{{ m.timestamp|timesince }} назад</div>
+    </div>
+    {% empty %}
+    <p class="no-messages">Нет сообщений в этом чате. Напишите первым!</p>
+    {% endfor %}
+  </div>
+
+  <form method="post" class="message-form">
+    {% csrf_token %}
+    <textarea name="text" rows="3" placeholder="Напишите сообщение..." required></textarea>
+    <button type="submit" class="btn btn-primary">Отправить</button>
+  </form>
+</div>
+
+<script>
+  ;(function () {
+    const form = document.querySelector('.message-form')
+    const textarea = form.querySelector('textarea')
+    const messagesList = document.querySelector('.messages-list')
+    const interlocutor = '{{ interlocutor.username }}'
+    let lastId = null
+    // initialize lastId
+    const lastMsg = messagesList.querySelector('.message:last-child')
+    if (lastMsg) {
+      lastId = lastMsg.dataset.messageId
+    }
+
+    function appendMessage(m) {
+      const div = document.createElement('div')
+      div.className = 'message ' + (m.sender === '{{ user.username }}' ? 'sent' : 'received')
+      div.innerHTML = `<div class="message-sender">${m.sender}</div><div class="message-text">${m.text}</div><div class="message-time">только что</div>`
+      messagesList.appendChild(div)
+      messagesList.scrollTop = messagesList.scrollHeight
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault()
+      const text = textarea.value.trim()
+      if (!text) return
+      fetch('{% url "api_send_message" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({ username: interlocutor, text: text }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.id) {
+            appendMessage({ id: data.id, text: data.text, sender: data.sender })
+            textarea.value = ''
+            lastId = data.id
+          }
+        })
+        .catch(console.error)
+    })
+
+    // Polling for new messages every 3s
+    setInterval(() => {
+      fetch(
+        '{% url "api_fetch_messages" %}?username=' +
+          encodeURIComponent(interlocutor) +
+          (lastId ? '&after_id=' + lastId : ''),
+      )
+        .then(r => r.json())
+        .then(data => {
+          if (data.messages && data.messages.length) {
+            data.messages.forEach(m => appendMessage(m))
+            lastId = data.last_id || lastId
+          }
+        })
+        .catch(console.error)
+    }, 3000)
+  })()
+</script>
 
 {% endblock %}

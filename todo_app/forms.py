@@ -1,85 +1,104 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
-from .models import TodoPost, Comment, Profile, Repost,SubTask,TaskList,Message
+from django.contrib.auth import get_user_model
+
+# Убедитесь, что эти модели есть в todo_app/models.py
+from .models import (
+    TodoPost,
+    Comment,
+    Profile,
+    Repost,
+    SubTask,
+    TaskList,
+    Message,
+)
+
+User = get_user_model()
+
 
 class CustomUserCreationForm(UserCreationForm):
-    username = forms.CharField(
-        label='Имя пользователя',
-        max_length=150,
-        help_text=''
-    )
-    email = forms.EmailField(
-        required=True,
-        label='Email'
-    )
-    password1 = forms.CharField(    
-        label='Пароль',
-        widget=forms.PasswordInput,
-        help_text=''
-    )
-    password2 = forms.CharField(
-        label='Подтверждение пароля',
-        widget=forms.PasswordInput,
-        help_text=''
-    )
-
     class Meta:
         model = User
-        fields = ('username', 'email', 'password1', 'password2')
+        fields = ("username", "email")
 
-class TodoPostForm(forms.ModelForm):    
+
+class TodoPostForm(forms.ModelForm):
+    # only content should be editable by user
+    content = forms.CharField(widget=forms.Textarea(attrs={
+        'rows': 3,
+        'maxlength': 280,
+        'placeholder': 'Что вы планируете сделать?'
+    }))
+
     class Meta:
         model = TodoPost
         fields = ['content']
 
-class RepostForm(forms.ModelForm):
-    class Meta:
-        model = Repost
-        fields = []
 
 class CommentForm(forms.ModelForm):
+    content = forms.CharField(widget=forms.Textarea(attrs={
+        'rows': 2,
+        'maxlength': 280,
+        'placeholder': 'Напишите комментарий...'
+    }))
+
     class Meta:
         model = Comment
         fields = ['content']
-        widgets = {
-            'content': forms.Textarea(attrs={
-                'placeholder': 'Напишите комментарий...',
-                'rows': 2,
-                'maxlength': 280
-            }),
-        }
+
+
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields ="__all__"
+        fields = ['bio', 'profile_picture']
+        widgets = {
+            'bio': forms.Textarea(attrs={'rows': 4, 'placeholder': 'О себе...'})
+        }
+
+
+class RepostForm(forms.ModelForm):
+    class Meta:
+        model = Repost
+        fields = ['post']  # user filled automatically if ever used
+
+
+class SubTaskForm(forms.ModelForm):
+    text = forms.CharField(widget=forms.TextInput(attrs={'maxlength': 280, 'placeholder': 'Добавить подзадачу'}))
+    class Meta:
+        model = SubTask
+        fields = ['text']
+
 
 class TaskListForm(forms.ModelForm):
+    # use HTML5 date picker widget for convenience
+    date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'required': 'required'}))
+    title = forms.CharField(widget=forms.TextInput(attrs={'required': 'required'}))
+
     class Meta:
         model = TaskList
         fields = ['title', 'date']
-        widgets = {
-            'title': forms.TextInput(attrs={
-                'placeholder': 'Название вашего дня...',
-                'maxlength': 200
-            }),
-            'date': forms.DateInput(attrs={
-                'type': 'date' 
-            })
-        }
-class SubTaskForm(forms.ModelForm):
-    class Meta:
-        model = SubTask
-        fields = ['text'] 
-        widgets = {
-            'text': forms.TextInput(attrs={'placeholder': 'Введите текст подзадачи...'})
-        }
-    
-class MessageForm(forms.Model):
+
+
+class MessageForm(forms.ModelForm):
     class Meta:
         model = Message
-        fields = ['text'] 
-        widgets = {
-            'text': forms.TextInput(attrs={'placeholder': 'Введите текст сообщения'})
-        }
-        
+        fields = "__all__"
+
+
+class MessageForm(forms.ModelForm):
+    class Meta:
+        model = Message
+        fields = "__all__"
+
+
+# form used in the user search page
+class UserSearchForm(forms.Form):
+    q = forms.CharField(
+        required=False,
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Поиск пользователей',
+            'class': 'search-input'
+        })
+    )
+

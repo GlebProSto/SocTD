@@ -14,31 +14,38 @@
   <!-- Информация пользователя -->
   <div class="profile-info">
     <div class="profile-actions">
-      {% if request.user != user %} {% if not is_friend %}
-      <form action="{% url 'add_friend' user.username %}" method="post">
-        {% csrf_token %}
-        <button class="edit-btn" type="submit">Добавить в друзья</button>
-      </form>
+      {% if request.user != user %}
+        {% if not is_friend %}
+        <form action="{% url 'add_friend' user.username %}" method="post">
+          {% csrf_token %}
+          <button class="edit-btn" type="submit">Добавить в друзья</button>
+        </form>
+        {% else %}
+        <form action="{% url 'add_friend' user.username %}" method="post">
+          {% csrf_token %}
+          <button class="edit-btn" type="submit">Удалить из друзей</button>
+        </form>
+        {% endif %}
+        <a href="{% url 'chat' user.username %}" class="edit-btn">Написать</a>
       {% else %}
-      <form action="{% url 'add_friend' user.username %}" method="post">
-        {% csrf_token %}
-        <button class="edit-btn" type="submit">Удалить из друзей</button>
-      </form>
-      {% endif %} {% else %}
-      <button class="edit-btn">Редактировать профиль</button>
+        <!-- editing form will appear below -->
       {% endif %}
     </div>
+
 
     <h1 class="profile-name">{{ user.username }}</h1>
 
     <!-- Статистика -->
     <div class="profile-stats">
-      <a href="{% url "friendship_list" %}"
-        ><span class="stat-item"> <strong>{{ user.profile.get_following_count }}</strong> подписок </span></a
-      >
-      <a href="/friendship/?section=subscribed"
-        ><span class="stat-item"> <strong>{{ user.profile.get_followers_count }}</strong> подписчиков </span></a
-      >
+      <a href="{% url "friendship_list" %}">
+        <span class="stat-item"> <strong>{{ user.profile.get_following_count }}</strong> подписок </span>
+      </a>
+      <a href="/friendship/?section=subscribed">
+        <span class="stat-item"> <strong>{{ user.profile.get_followers_count }}</strong> подписчиков </span>
+      </a>
+      <span class="stat-item"> <strong>{{ user.profile.get_posts_likes }}</strong> лайков</span>
+      <span class="stat-item"> <strong>{{ user.profile.get_posts_reposts }}</strong> репостов</span>
+      <span class="stat-item"> <strong>{{ user.profile.get_posts_comments }}</strong> комментов</span>
     </div>
 
     {% if user.profile.bio %}
@@ -56,6 +63,60 @@
     <a href="?section=repost" class="profile-nav-item {% if section == 'repost' %}active{% endif %}">Все посты</a>
   </nav>
 
+  {% if request.user == user %}
+  <!-- editing form modal trigger -->
+  <button id="toggle-edit" class="btn btn-outline" style="margin-bottom:10px;">Редактировать профиль</button>
+  <!-- backdrop for modal -->
+  <div id="edit-modal-backdrop" style="display:none;"></div>
+  <div class="edit-profile-form" id="edit-profile-form" style="display:none;">
+    <h2>Редактирование профиля</h2>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-row">
+        <div class="thumb">
+          {% if user.profile.profile_picture %}
+            <img src="{{ user.profile.profile_picture.url }}" alt="Аватар" />
+          {% else %}
+            <div class="avatar-placeholder">{{ user.username|first|upper }}</div>
+          {% endif %}
+        </div>
+        <div class="form-field">
+          <label for="id_bio">Bio:</label>
+          {{ form.bio }}
+
+          <div class="file-input">
+            <label class="file-label" for="id_profile_picture">Выбрать фото</label>
+            {{ form.profile_picture }}
+            <span class="current-pic">{% if user.profile.profile_picture %}Текущее: {{ user.profile.profile_picture.name|slice:":40" }}{% endif %}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="btn--primary">Сохранить</button>
+        <button type="button" id="close-edit" class="btn--ghost">Закрыть</button>
+      </div>
+    </form>
+  </div>
+  <script>
+    const toggleBtn = document.getElementById('toggle-edit');
+    const formModal = document.getElementById('edit-profile-form');
+    const backdrop = document.getElementById('edit-modal-backdrop');
+    const closeBtn = document.getElementById('close-edit');
+    function openModal() {
+      formModal.style.display = 'block';
+      backdrop.style.display = 'block';
+    }
+    function closeModal() {
+      formModal.style.display = 'none';
+      backdrop.style.display = 'none';
+    }
+    toggleBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    backdrop.addEventListener('click', closeModal);
+  </script>
+  {% endif %}
+
   <!-- Лента постов пользователя -->
   <div class="profile-posts">
     {% if section == 'repost' %}
@@ -63,13 +124,15 @@
     {% if posts %} {% for post in posts %}
     <div class="profile-post">
       <div class="post-header">
-        <!-- Показываем, кто автор оригинального поста -->
         <span class="repost-info">
           {% if post.author != user %} 🔁 Репостнул от @{{ post.author.username }} {% endif %}
         </span>
       </div>
       <div class="post-content">
         <p>{{ post.content }}</p>
+      </div>
+      <div class="post-actions">
+        ❤️ {{ post.likes.count }} &nbsp; 🔄 {{ post.reposts.count }} &nbsp; 💬 {{ post.comments.count }}
       </div>
       <div class="post-meta">
         <span class="post-time">{{ post.created_at|date:"H:i" }}</span>
@@ -87,6 +150,9 @@
     <div class="profile-post">
       <div class="post-content">
         <p>{{ post.content }}</p>
+      </div>
+      <div class="post-actions">
+        ❤️ {{ post.likes.count }} &nbsp; 🔄 {{ post.reposts.count }} &nbsp; 💬 {{ post.comments.count }}
       </div>
       <div class="post-meta">
         <span class="post-time">{{ post.created_at|date:"H:i" }}</span>

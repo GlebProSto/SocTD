@@ -22,8 +22,8 @@
 
           {% if user.is_authenticated %}
           <a href="{% url 'notifications' %}" class="nav-item">
-            🔔 Уведомления {% if unread_notifications_total %}<span class="badge">{{ unread_notifications_total }}</span
-            >{% endif %}
+            🔔 Уведомления{% if unread_notifications_total %}
+            <span class="badge">{{ unread_notifications_total }}</span>{% endif %}
           </a>
           {% else %}
           <a href="{% url 'login' %}" class="nav-item">🔔 Уведомления</a>

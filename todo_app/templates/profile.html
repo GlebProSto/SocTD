@@ -37,10 +37,10 @@
 
     <!-- Статистика -->
     <div class="profile-stats">
-      <a href="{% url "friendship_list" %}">
+      <a href="{% url 'friendship_list' %}?section=subscribed">
         <span class="stat-item"> <strong>{{ user.profile.get_following_count }}</strong> подписок </span>
       </a>
-      <a href="/friendship/?section=subscribed">
+      <a href="{% url 'friendship_list' %}?section=subscribers">
         <span class="stat-item"> <strong>{{ user.profile.get_followers_count }}</strong> подписчиков </span>
       </a>
       <span class="stat-item"> <strong>{{ user.profile.get_posts_likes }}</strong> лайков</span>

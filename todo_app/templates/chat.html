@@ -7,7 +7,7 @@
 
   <div class="messages-list">
     {% for m in chat_messages %}
-    <div class="message {% if m.sender == user %}sent{% else %}received{% endif %}">
+    <div class="message {% if m.sender == user %}sent{% else %}received{% endif %}" data-message-id="{{ m.id }}">
       <div class="message-sender">{{ m.sender.username }}</div>
       <div class="message-text">{{ m.text }}</div>
       <div class="message-time">{{ m.timestamp|timesince }} назад</div>

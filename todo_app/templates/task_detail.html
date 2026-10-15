@@ -8,9 +8,11 @@
     <form method="post" action="{% url 'subtask_toggle' sub_task.id %}">
       {% csrf_token %}
       <div class="subtask-item">
-        <button type="submit" style="border: none; background: none; cursor: pointer">
-          <input type="checkbox" {% if sub_task.completed %}checked{% endif %} onclick="this.form.submit()" />
-        </button>
+        <input
+          type="checkbox"
+          {% if sub_task.completed %}checked{% endif %}
+          onclick="this.form.submit()"
+          aria-label="Отметить подзадачу" />
         <span>{{ sub_task.text }}</span>
         <small>({{ sub_task.created_at|date:"d.m.Y H:i" }})</small>
       </div>

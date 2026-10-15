@@ -2,6 +2,8 @@ import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib import messages
@@ -9,19 +11,20 @@ from .models import TodoPost, Comment, Profile, Repost, Friendship,Notification,
 from .forms import CustomUserCreationForm, TodoPostForm, CommentForm, ProfileForm, RepostForm, SubTaskForm, TaskListForm, UserSearchForm
 from django.utils import timezone
 from django.db.models import Q
+from django.core.paginator import Paginator
 
 def home(request):
-    posts = TodoPost.objects.all().order_by('-created_at')
+    posts = (
+        TodoPost.objects
+        .select_related('author', 'author__profile')
+        .prefetch_related('likes', 'reposts', 'comments')
+        .order_by('-created_at')
+    )
+    page_obj = Paginator(posts, 10).get_page(request.GET.get('page'))
+    context = {'posts': page_obj.object_list, 'page_obj': page_obj}
     if request.user.is_authenticated:
-        form = TodoPostForm()
-        return render(request, 'home.html', {
-            'form': form,
-            'posts': posts
-        })
-    else:
-        return render(request, 'home.html',{
-            'posts' : posts
-        }) 
+        context['form'] = TodoPostForm()
+    return render(request, 'home.html', context)
 
  
 def register(request):
@@ -40,16 +43,15 @@ def profile(request):
     section = request.GET.get('section', 'posts')
     profile, created = Profile.objects.get_or_create(user=request.user)
     
-    if section == 'posts':  
-        posts = TodoPost.objects.filter(author=request.user).order_by('-created_at')
-    elif section == 'repost':
+    if section == 'repost':
         reposted_posts = TodoPost.objects.filter(
             repost__user=request.user
-        ).order_by('-repost__created_at')
-        
+        )
         own_posts = TodoPost.objects.filter(author=request.user)
-        
         posts = (reposted_posts | own_posts).distinct().order_by('-created_at')
+    else:
+        # default (and any unknown section) -> own posts, avoids UnboundLocalError
+        posts = TodoPost.objects.filter(author=request.user).order_by('-created_at')
     
     if request.method == 'POST':
         form = ProfileForm(request.POST, request.FILES, instance=profile) 
@@ -74,29 +76,29 @@ def user_profile(request, username):
     is_friend = False
     if request.user.is_authenticated and request.user != user:
         is_friend = Friendship.objects.filter(
-            from_user=request.user, 
-            to_user=user, 
+            Q(from_user=request.user, to_user=user) |
+            Q(from_user=user, to_user=request.user),
             accepted=True
         ).exists()
     
     section = request.GET.get('section', 'posts')
     
-    if section == 'posts':
-        posts = TodoPost.objects.filter(author=user).order_by('-created_at')
-        reposts = []
-    elif section == 'repost':
-        reposts = Repost.objects.filter(user=user).order_by('-created_at')
-        posts = []
+    if section == 'repost':
+        reposted_posts = TodoPost.objects.filter(
+            repost__user=user
+        )
+        own_posts = TodoPost.objects.filter(author=user)
+        posts = (reposted_posts | own_posts).distinct().order_by('-created_at')
     else:
+        # default (and any unknown section) -> own posts, avoids UnboundLocalError
         posts = TodoPost.objects.filter(author=user).order_by('-created_at')
-    
+
     context = {
         'user': user,
         'profile': profile,
         'posts': posts,
         'is_friend': is_friend,
         'section': section,
-        'reposts': reposts
     }
     return render(request, 'profile.html', context)
 
@@ -115,7 +117,12 @@ def create_post(request):
         else:
             messages.error(request, "Не удалось опубликовать пост. Проверьте текст.")
         next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
-        if next_url:
+        # Guard against open-redirect: only allow local destinations
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
             return redirect(next_url)
         return redirect('home')
     return redirect('home')
@@ -140,8 +147,7 @@ def create_tasks(request):
 @login_required
 def tasks(request):
     task_list = TaskList.objects.filter(user=request.user).order_by('-created_at')
-    if request.user:
-        return render(request,'tasks.html',{'task_list':task_list})
+    return render(request, 'tasks.html', {'task_list': task_list})
 
 @login_required
 def task_detail(request, task_id):
@@ -167,17 +173,7 @@ def subtask_toggle(request, subtask_id):
         subtask.save()
     
     return redirect('task_detail', task_id=tasklist.id)
-@login_required
-def like_post(request, post_id):
-    post = get_object_or_404(TodoPost, id=post_id)
-    if request.user in post.likes.all():
-        post.likes.remove(request.user)
-        liked = False
-    else:
-        post.likes.add(request.user)
-        liked = True
-    return JsonResponse({'liked': liked, 'likes_count': post.likes.count()})
-    
+
 @login_required
 def add_subtask(request,task_id):
     task = get_object_or_404(TaskList, id=task_id,user=request.user)
@@ -186,47 +182,77 @@ def add_subtask(request,task_id):
         if form.is_valid():
             new_subtask = form.save()
             task.subtasks.add(new_subtask)
-            return redirect('task_detail', task_id=task_id)
+    return redirect('task_detail', task_id=task_id)
 
 @login_required
+@require_POST
 def add_comment(request, post_id):
     post = get_object_or_404(TodoPost, id=post_id)
-    
-    if request.method == 'POST':
-        content = request.POST.get('content', '').strip()
-        if content:
-            Comment.objects.create(
+
+    content = request.POST.get('content', '').strip()
+    if content:
+        comment = Comment.objects.create(
+            post=post,
+            author=request.user,
+            content=content
+        )
+        # Notify the post author (but not on their own post)
+        if post.author != request.user:
+            Notification.objects.get_or_create(
+                user=post.author,
+                from_user=request.user,
+                notification_type='comment',
                 post=post,
-                author=request.user,
-                content=content
+                comment=comment,
             )
-    
+
     return redirect('home')
 
 
 @login_required
+@require_POST
 def like_post(request, post_id):
     post = get_object_or_404(TodoPost, id=post_id)
     if request.user in post.likes.all():
         post.likes.remove(request.user)
         liked = False
+        # clean up the corresponding like notification
+        Notification.objects.filter(
+            user=post.author, from_user=request.user,
+            notification_type='like', post=post
+        ).delete()
     else:
         post.likes.add(request.user)
         liked = True
+        if post.author != request.user:
+            Notification.objects.get_or_create(
+                user=post.author, from_user=request.user,
+                notification_type='like', post=post,
+            )
     return JsonResponse({'liked': liked, 'likes_count': post.likes.count()})
 
 @login_required
+@require_POST
 def repost_post(request, post_id):
     post = get_object_or_404(TodoPost, id=post_id)
     if Repost.objects.filter(user=request.user, post=post).exists():
         Repost.objects.filter(user=request.user, post=post).delete()
         reposted = False
+        Notification.objects.filter(
+            user=post.author, from_user=request.user,
+            notification_type='repost', post=post
+        ).delete()
     else:
         Repost.objects.create(user=request.user, post=post)
         reposted = True
-    
+        if post.author != request.user:
+            Notification.objects.get_or_create(
+                user=post.author, from_user=request.user,
+                notification_type='repost', post=post,
+            )
+
     return JsonResponse({
-        'reposted': reposted, 
+        'reposted': reposted,
         'reposts_count': post.reposts.count()
     })
 
@@ -246,17 +272,22 @@ def search_users(request):
         )
     users_qs = users_qs.order_by('username')
 
+    # Batch-fetch all friendships involving the current user (avoids N+1)
+    friend_map = {}
+    for f in Friendship.objects.filter(
+        Q(from_user=request.user) | Q(to_user=request.user)
+    ):
+        other = f.to_user if f.from_user_id == request.user.id else f.from_user
+        friend_map[other.id] = f
+
     results = []
     for u in users_qs:
-        existing = Friendship.objects.filter(
-            (Q(from_user=request.user, to_user=u) |
-             Q(from_user=u, to_user=request.user))
-        ).first()
+        existing = friend_map.get(u.id)
         status = 'none'
         if existing:
             if existing.accepted:
                 status = 'friends'
-            elif existing.from_user == request.user:
+            elif existing.from_user_id == request.user.id:
                 status = 'requested'
             else:
                 status = 'pending'
@@ -283,6 +314,12 @@ def add_friend(request, username):
             Friendship.objects.filter(
                 Q(from_user=request.user, to_user=to_user) |
                 Q(from_user=to_user, to_user=request.user)
+            ).delete()
+            # remove any lingering friend-request notifications in both directions
+            Notification.objects.filter(
+                Q(user=to_user, from_user=request.user) |
+                Q(user=request.user, from_user=to_user),
+                notification_type='friend_request'
             ).delete()
             messages.success(request, f"{to_user.username} удален из друзей")
         else:
@@ -374,7 +411,8 @@ def friendship_list(request):
     
     elif section == 'subscribed':
         subscribed = Friendship.objects.filter(
-            from_user=request.user
+            from_user=request.user,
+            accepted=True
         ).order_by('to_user__username')
     
     return render(request, 'friendship.html', {
@@ -463,15 +501,30 @@ def api_fetch_messages(request):
 
 @login_required
 def messages_list(request):
-    # List all chats for the current user, ordered by last message time
-    chats = Chat.objects.filter(participants=request.user).distinct()
-    chats = sorted(chats, key=lambda c: c.messages.order_by('-timestamp').first().timestamp if c.messages.exists() else c.created_at, reverse=True)
+    # Prefetch participants and messages to avoid N+1 queries
+    chats = (
+        Chat.objects
+        .filter(participants=request.user)
+        .distinct()
+        .prefetch_related('participants', 'messages')
+    )
     chat_items = []
     for c in chats:
-        other = c.participants.exclude(id=request.user.id).first()
-        last = c.messages.order_by('-timestamp').first()
-        unread = c.unread_count_for(request.user)
+        other = next(
+            (p for p in c.participants.all() if p.id != request.user.id), None
+        )
+        all_msgs = list(c.messages.all())
+        last = max(all_msgs, key=lambda m: m.timestamp) if all_msgs else None
+        unread = sum(
+            1 for m in all_msgs
+            if not m.is_read and m.sender_id != request.user.id
+        )
         chat_items.append({'chat': c, 'other': other, 'last': last, 'unread': unread})
 
+    # sort by last activity (newest first)
+    chat_items.sort(
+        key=lambda item: item['last'].timestamp if item['last'] else item['chat'].created_at,
+        reverse=True,
+    )
     return render(request, 'messages.html', {'chat_items': chat_items})
 

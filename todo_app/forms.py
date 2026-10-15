@@ -10,7 +10,6 @@ from .models import (
     Repost,
     SubTask,
     TaskList,
-    Message,
 )
 
 User = get_user_model()
@@ -77,18 +76,6 @@ class TaskListForm(forms.ModelForm):
     class Meta:
         model = TaskList
         fields = ['title', 'date']
-
-
-class MessageForm(forms.ModelForm):
-    class Meta:
-        model = Message
-        fields = "__all__"
-
-
-class MessageForm(forms.ModelForm):
-    class Meta:
-        model = Message
-        fields = "__all__"
 
 
 # form used in the user search page

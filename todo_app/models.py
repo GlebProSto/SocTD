@@ -1,5 +1,4 @@
 # todo_app/models.py
-import datetime
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
@@ -96,7 +95,7 @@ class TaskList(models.Model):
     title = models.CharField(max_length=200) 
     date = models.DateField() 
     subtasks = models.ManyToManyField(SubTask)
-    created_at = models.DateTimeField(default=datetime.datetime.now)
+    created_at = models.DateTimeField(default=timezone.now)
     @property
     def completion_percentage(self):
         total = self.subtasks.count()
@@ -142,11 +141,8 @@ def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
     else:
-        # Ensure profile exists for existing users (defensive)
-        try:
-            instance.profile.save()
-        except Profile.DoesNotExist:
-            Profile.objects.create(user=instance)
+        # Ensure profile exists for existing users without an extra DB write
+        Profile.objects.get_or_create(user=instance)
 
 
 

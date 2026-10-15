@@ -21,8 +21,8 @@
       <div class="user-item">
         <a href="{% url 'user_profile' user.username %}" class="user-link">
           <div class="user-avatar">
-            {% if user.profile.avatar %}
-            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" />
+            {% if user.profile.profile_picture %}
+            <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" />
             {% else %}
             <div class="avatar-placeholder">{{ user.username|first|upper }}</div>
             {% endif %}
@@ -50,8 +50,8 @@
       <div class="user-item">
         <a href="{% url 'user_profile' user.username %}" class="user-link">
           <div class="user-avatar">
-            {% if user.profile.avatar %}
-            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" />
+            {% if user.profile.profile_picture %}
+            <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" />
             {% else %}
             <div class="avatar-placeholder">{{ user.username|first|upper }}</div>
             {% endif %}

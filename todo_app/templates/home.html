@@ -102,6 +102,21 @@
   {% endfor %}
 </div>
 
+<!-- Пагинация -->
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="pagination">
+  {% if page_obj.has_previous %}
+  <a href="?page={{ page_obj.previous_page_number }}" class="page-link">← Назад</a>
+  {% endif %}
+  <span class="page-current">
+    Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+  </span>
+  {% if page_obj.has_next %}
+  <a href="?page={{ page_obj.next_page_number }}" class="page-link">Вперёд →</a>
+  {% endif %}
+</nav>
+{% endif %}
+
 <script>
   // Лайки
   document.querySelectorAll('.like-form').forEach(form => {

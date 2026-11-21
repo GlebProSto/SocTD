@@ -155,6 +155,5 @@ python manage.py runserver
 ## 🍿 Видео
 
 
-https://github.com/user-attachments/assets/c1fcf840-332f-438e-b4f8-0c34f1d36db1
-
+https://github.com/user-attachments/assets/cb92db0d-d97d-464e-9508-a3cf2046bd0d
 
